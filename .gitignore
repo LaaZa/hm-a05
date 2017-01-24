@@ -1,0 +1,9 @@
+.idea/
+*.pyc
+setup.cfg
+*.sublime-project
+*.sublime-workspace
+*.log
+config.ini
+.storage
+load.order

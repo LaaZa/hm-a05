@@ -1,0 +1,5 @@
+[miharu]
+token=
+log_path=miharu.log
+default_command_prefix=@
+[apikeys]
