@@ -14,12 +14,17 @@ class Plugin(PluginBase):
         self.help = 'Returns the top post on reddit. Can optionally pass a subreddit to get the top post there instead'
 
     async def on_message(self, message, trigger):
-        msg = self.Command(message)
-        if len(msg.parts) > 1:
-            path = '/r/' + ' '.join(msg.parts[1:]) + '/.rss'
-            d = feedparser.parse('http://www.reddit.com' + path)
-            await Globals.disco.send_message(message.channel, d.entries[0]['link'])
-        else:
-            d = feedparser.parse('http://www.reddit.com/.rss')
-            await Globals.disco.send_message(message.channel, d.entries[0]['link'])
-        return True
+        try:
+            msg = self.Command(message)
+            if len(msg.parts) > 1:
+                path = '/r/' + ' '.join(msg.parts[1:]) + '/.rss'
+                d = feedparser.parse('http://www.reddit.com' + path)
+                await Globals.disco.send_message(message.channel, d.entries[0]['link'])
+            else:
+                d = feedparser.parse('http://www.reddit.com/.rss')
+                await Globals.disco.send_message(message.channel, d.entries[0]['link'])
+            return True
+        except Exception as e:
+            Globals.log.error(f'Could not get the top post: {str(e)}')
+            await Globals.disco.send_message(message.channel, 'Something went wrong')
+            return False
