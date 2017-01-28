@@ -27,3 +27,7 @@ class Events:
         @Globals.disco.event
         async def on_ready():
             Globals.log.info(f'Logged in: {Globals.disco.user.name} id: {Globals.disco.user.id}')
+
+        @Globals.disco.event
+        async def on_server_join(server):
+            Globals.log.info(f'Joined Server: {server.name}')
