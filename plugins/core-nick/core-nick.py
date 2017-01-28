@@ -7,17 +7,20 @@ class Plugin(PluginBase):
 
     def __init__(self):
         self.type = PluginBase.PluginType.CORE
-        self.name = 'nick'
+        self.name = 'nickname change'
         t = PluginBase.Trigger()
         t.add_event('on_message', 'nick', True, self.on_message)
         self.trigger = t.functions
-        self.help = 'just a test'
+        self.help = 'Change bot nickname'
 
     async def on_message(self, message, trigger):
             msg = PluginBase.Command(message)
             if message.server:
                 try:
-                    await Globals.disco.change_nickname(message.server.get_member(Globals.disco.user.id), ' '.join(msg.parts[1:]).strip())
+                    if Globals.permissions.has_permission(message.author, Globals.permissions.PermissionLevel.admin):
+                        await Globals.disco.change_nickname(message.server.get_member(Globals.disco.user.id), ' '.join(msg.parts[1:]).strip())
+                    else:
+                        await Globals.disco.send_message(message.channel, 'You have no permissions for this :<')
                     return True
                 except Exception as e:
                     Globals.log.error(f'Could not change nick: {str(e)}')
