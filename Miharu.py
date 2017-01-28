@@ -2,6 +2,7 @@ import logging
 
 from modules.conf import Config
 from modules.globals import Globals
+from modules.permissions import Permissions
 from modules.pluginloader import PluginLoader
 from modules.events import Events
 from modules.disco import Disco
@@ -19,6 +20,7 @@ Globals.default_command_prefix = conf.get_opt('miharu', 'default_command_prefix'
 
 token = conf.get_opt('miharu', 'token')
 
+Globals.database_file = conf.get_opt('miharu', 'database_file')
 #################
 #    Logging    #
 #################
@@ -41,30 +43,11 @@ root_logger.info('Miharu start')
 Globals.log = root_logger
 #################
 
+
 bot = Disco(token)
 Globals.disco = bot
 PluginLoader()
-
 Events()
+Permissions()
 
 bot.run()
-
-'''
-bot = commands.Bot(command_prefix='?', description='test bot')
-
-@bot.event
-async def on_ready():
-    print('Logged in as')
-    print(bot.user.name)
-    print(bot.user.id)
-    print('------')
-
-@bot.command()
-async def test(url):
-    """Adds two numbers together."""
-    bot.join_voice_channel('General')
-    await bot.say(url)
-
-
-bot.run(token)
-'''
