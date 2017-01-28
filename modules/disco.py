@@ -1,6 +1,5 @@
 import sys
 import discord
-import copy
 
 from modules.globals import Globals
 
@@ -32,6 +31,10 @@ class Disco(discord.Client):
     def quit(self):
         Globals.log.info(f'Quitting')
         sys.exit()
+
+    async def say(self, channel, content):
+        await self.send_typing(channel)
+        await self.send_message(channel, content)
 
     class DataMessage:
 
