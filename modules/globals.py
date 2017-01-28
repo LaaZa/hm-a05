@@ -8,6 +8,8 @@ class Globals:
     __channel_command_prefix = {}
     pluginloader = None
     events = None
+    database_file = None
+    permissions = None
 
     @classmethod
     def set_channel_command_prefix(cls, channel, prefix=default_command_prefix):
