@@ -46,3 +46,8 @@ class PluginBase:
     name = None
     trigger = None
     help = None
+
+    def markdown(self, content):
+        start = '```markdown\n'
+        end = '\n```'
+        return start + str(content) + end

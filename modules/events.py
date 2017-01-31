@@ -50,7 +50,7 @@ class Events:
                         status = False
 
         @Globals.disco.event
-        async def on_member_remove(member_before, member_after):
+        async def on_member_update(member_before, member_after):
             if not member_before.bot:
                 await Globals.pluginloader.generate_plugin_queue('on_member_update', before=member_before, after=member_after)
                 status = True
