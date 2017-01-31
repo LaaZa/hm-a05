@@ -3,6 +3,7 @@ import sys
 import re
 import json
 import traceback
+import types
 from collections import OrderedDict, defaultdict, deque
 import importlib as imp
 import importlib.machinery
@@ -33,33 +34,37 @@ class PluginLoader:
         for fname, plugin in ((x, y) for x, y in self.plugins.items() if y.type in types):
             attr = getattr(plugin, attribute)
             if attribute == 'trigger':
-                if not isinstance(attr, tuple):
-                    attr = (attr,)  # make trigger a tuple so we can loop through correctly
-                if value in attr:
-                    return plugin
+                for evn, values in attr:
+                    if value in values[0]:
+                        return plugin
             else:
                 if value == attr:
                     return plugin
 
-    async def generate_plugin_queue(self, value, event, types):
+    async def generate_plugin_queue(self, event, is_command=False, **kwargs):
         self.purge_hooks()
         self.plugin_queue.clear()
-        use_cmd = len(event.split(':')) > 1
-        for plugin in (x for x in self.plugins.values() if x.type in types):
+        for plugin in self.plugins.values():
             fname = self.plugin_to_fname(plugin)
-            triggers = plugin.trigger.get(event.split(':')[0], [])
+            triggers = plugin.trigger.get(event, [])
             if not isinstance(triggers, list):
                 triggers = (triggers,)  # make trigger a tuple so we can loop through correctly
             for trigger, cmd, fn in triggers:
-                if not use_cmd and not cmd:  # use regex
-                    match = re.search(trigger, value.content)
+                if not is_command and not cmd and isinstance(trigger, type(re.compile(''))):  # use regex
+                    match = re.search(trigger, kwargs['message'].content)
                     if match:
                         self.plugin_queue.append((plugin, event, match, fn))
                         if fname in self.hooks.keys():
                             for hooked in self.hooks.get(fname, ''):
                                 self.plugin_queue.append((self.plugins.get(hooked), fname))
                                 Globals.log.debug('Hook plugin added')
-                elif use_cmd and trigger.lower() == PluginBase.Command(value).cmd.lower():
+                elif is_command and trigger.lower() == PluginBase.Command(kwargs['message']).cmd.lower():
+                    self.plugin_queue.append((plugin, event, trigger, fn))
+                    if fname in self.hooks.keys():
+                        for hooked in self.hooks.get(fname, ''):
+                            self.plugin_queue.append((self.plugins.get(hooked), fname))
+                            Globals.log.debug('Hook plugin added')
+                elif not is_command and isinstance(trigger, types.FunctionType) and trigger(**kwargs):
                     self.plugin_queue.append((plugin, event, trigger, fn))
                     if fname in self.hooks.keys():
                         for hooked in self.hooks.get(fname, ''):
@@ -79,13 +84,19 @@ class PluginLoader:
         try:
             if self.plugin_to_fname(plugin) in self.channel_disabled[channel]:
                 return False
-            if await fn(**kwargs) and (self.plugin_to_fname(plugin) not in self.hooks.keys()):
-                Globals.log.debug('Plugin execution satisfied clearing queue')
-                self.plugin_queue.clear()
-                return True
-            elif trigger in self.hooks.keys():
-                Globals.log.debug('Plugin Executing Trigger: ' + plugin.name)
-                return False
+            test = True
+            if callable(trigger):
+                test = trigger(**kwargs)
+            if test:
+                if await fn(**kwargs) and (self.plugin_to_fname(plugin) not in self.hooks.keys()):
+                    Globals.log.debug('Plugin execution satisfied clearing queue')
+                    self.plugin_queue.clear()
+                    return True
+                elif trigger in self.hooks.keys():
+                    Globals.log.debug('Plugin Executing Trigger: ' + plugin.name)
+                    return False
+                else:
+                    return False
             else:
                 return False
         except Exception as err:

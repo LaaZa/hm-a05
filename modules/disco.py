@@ -8,6 +8,15 @@ class Disco(discord.Client):
 
     def __init__(self, token):
         self.__token = token
+        if not discord.opus.is_loaded():
+            try:
+                discord.opus.load_opus('opus')
+            except OSError as e:
+                Globals.log.info(f'Opus codec could not be loaded: {str(e)}')
+            else:
+                Globals.log.info('Opus codec loaded')
+        else:
+            Globals.log.info('Opus codec loaded')
         super().__init__()
 
     async def login(self):
@@ -16,13 +25,6 @@ class Disco(discord.Client):
             await super().login(self.__token)
         except (discord.LoginFailure, discord.HTTPException, TypeError) as e:
             Globals.log.error(f'Login failed: {e}')
-
-    async def connect(self):
-        try:
-            await super().connect()
-            super().opus.load_opus('libopus')
-        except (discord.GatewayNotFound, discord.ConnectionClosed) as e:
-            Globals.log.error(f'Connection failed: {e}')
 
     async def logout(self):
         Globals.log.info(f'Logging out')
