@@ -9,7 +9,7 @@ import importlib as imp
 import importlib.machinery
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
-
+import discord
 
 class PluginLoader:
 
@@ -58,7 +58,7 @@ class PluginLoader:
                             for hooked in self.hooks.get(fname, ''):
                                 self.plugin_queue.append((self.plugins.get(hooked), fname))
                                 Globals.log.debug('Hook plugin added')
-                elif is_command and trigger.lower() == PluginBase.Command(kwargs['message']).cmd.lower():
+                elif is_command and isinstance(trigger, str) and trigger.lower() == PluginBase.Command(kwargs['message']).cmd.lower():
                     self.plugin_queue.append((plugin, event, trigger, fn))
                     if fname in self.hooks.keys():
                         for hooked in self.hooks.get(fname, ''):
@@ -101,7 +101,7 @@ class PluginLoader:
                 return False
         except Exception as err:
             Globals.log.error('Unhandled Exception from plugin: %s : %s' % (plugin.name, traceback.format_exc()))
-            #Globals.irc.action('gets hit by unhandled %s thrown from %s plugin' % (type(err).__name__, plugin.name), data.destination)
+            await Globals.disco.send_file(channel, fp=sys.path[0] + '/static/miharu_chibi_everything_small_crop_gradient.png', content=f'gets hit by unhandled **{type(err).__name__}** thrown from {plugin.name} plugin')
             return False
 
     def load_plugins(self, load='*'):
