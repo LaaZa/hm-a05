@@ -2,6 +2,7 @@ from enum import Enum
 from modules.globals import Globals
 from operator import itemgetter
 import re
+import asyncio
 
 
 class PluginBase:
@@ -82,9 +83,9 @@ class PluginBase:
             indx = sorted(indx, key=itemgetter(1))
             for i in range(len(indx)):
                 if i == 0:
-                    keyword_values.update({indx[i - 1][0]: self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):].strip()})
+                    keyword_values.update({indx[i - 1][0]: self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):].strip(':')})
                 else:
-                    keyword_values.update({indx[i - 1][0]: self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):indx[i][1]].strip()})
+                    keyword_values.update({indx[i - 1][0]: self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):indx[i][1]].strip(':')})
             Globals.log.debug(f'keyword_values: {keyword_values}')
             return keyword_values
 
@@ -97,3 +98,48 @@ class PluginBase:
         start = '```markdown\n'
         end = '\n```'
         return start + str(content) + end
+
+    class Jobs:
+
+        interval_tasks = {}
+
+        class IntervalTask:
+
+            def __init__(self, coro, interval, *args, **kwargs):
+                self.coro = coro
+                self.interval = interval
+                self.args = args
+                self.kwargs = kwargs
+                self.running = True
+
+                self.task = Globals.disco.loop.create_task(self.run())
+
+            async def run(self):
+                while self.running:
+                    await self.coro(*self.args, **self.kwargs)
+                    await asyncio.sleep(self.interval, loop=Globals.disco.loop)
+
+            def stop(self):
+                self.running = False
+                self.task.cancel()
+
+            def __del__(self):
+                self.stop()
+
+        @classmethod
+        def add_interval_task(cls, caller, task_id, interval, coroutine, *args, **kwargs):
+            if caller.__module__ + task_id in cls.interval_tasks.keys():
+                return False
+            else:
+                task = cls.IntervalTask(coroutine, interval, *args, **kwargs)
+                cls.interval_tasks[caller.__module__ + task_id] = task
+                return True
+
+        @classmethod
+        def remove_interval_task(cls, caller, task_id):
+            if caller.__module__ + task_id in cls.interval_tasks.keys():
+                cls.interval_tasks.get(caller.__module__ + task_id).stop()
+                cls.interval_tasks.pop(caller.__module__ + task_id)
+                return True
+            else:
+                return False

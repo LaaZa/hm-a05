@@ -14,6 +14,13 @@ def get_git_commit_count(path_to_git='git'):
     return subprocess.check_output([path_to_git, 'rev-list', 'HEAD', '--count'])
 
 
+def get_git_commit_count_safe():
+    try:
+        return get_git_commit_count().decode("utf-8").strip()
+    except WindowsError:
+        return get_git_commit_count(win_git_path).decode("utf-8").strip()
+
+
 def get_git_revision_hash(path_to_git='git'):
     return subprocess.check_output([path_to_git, 'rev-parse', 'HEAD'])
 
