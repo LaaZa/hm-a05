@@ -3,6 +3,7 @@ from modules.sqlite import SQLite
 from modules.globals import Globals
 import sqlite3
 import secrets
+import discord
 
 
 class Permissions:
@@ -59,3 +60,18 @@ class Permissions:
             self.db.get_cursor().execute('CREATE TABLE IF NOT EXISTS permissions (id INTEGER PRIMARY KEY, user_id TEXT, permission_level INTEGER)')
         except sqlite3.Error as err:
             Globals.log.error(f'Table creation failed: {str(err)}')
+
+    def has_discord_permissions(self, member, permissions_tuple: tuple, channel=None):
+        permissions_dict = {}
+        for permission in permissions_tuple:
+            permissions_dict[permission] = True
+
+        permissions = discord.Permissions(permissions_dict)
+
+        if channel:
+            return member.permissions_in(channel).is_subset(permissions)
+
+        return member.server_permissions.is_subset(permissions)
+
+    def client_has_discord_permissions(self, permissions_tuple: tuple, channel):
+        return self.has_discord_permissions(channel.server.get_member(Globals.disco.user.id), permissions_tuple, channel=channel)
