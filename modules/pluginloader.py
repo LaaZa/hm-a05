@@ -218,7 +218,7 @@ class PluginLoader:
         for name, plugin in self.plugins.items():
             if fname == name:
                 if fname not in self.channel_disabled[channel]:
-                    if plugin.type not in PluginBase.PluginType.core_types():
+                    if plugin.type is not PluginBase.PluginType.CORE:
                         self.channel_disabled[channel].append(fname)
                         Globals.log.info('Plugin %s disabled on %s' % (fname, channel))
                         return 1  # success
@@ -233,7 +233,7 @@ class PluginLoader:
         for name, plugin in self.plugins.items():
             if fname == name:
                 if fname in self.channel_disabled[channel]:
-                    if plugin.type not in PluginBase.PluginType.core_types():
+                    if plugin.type is not PluginBase.PluginType.CORE:
                         self.channel_disabled[channel].remove(fname)
                         Globals.log.info('Plugin %s enabled on %s' % (fname, channel))
                         return 1  # success
