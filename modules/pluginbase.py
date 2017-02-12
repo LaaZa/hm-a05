@@ -23,10 +23,13 @@ class PluginBase:
 
     class Command:
 
-        def __init__(self, message):
-            self.message_content = message.content
+        def __init__(self, message, clean=False):
+            if clean:
+                self.message_content = message.clean_content
+            else:
+                self.message_content = message.content
             self.cmd_prefix = Globals.channel_command_prefix(message.channel)
-            self.parts = message.content.split()
+            self.parts = self.message_content.split()
             if len(self.parts) > 0 and self.parts[0].startswith(self.cmd_prefix):
                 self.cmd = self.parts[0].lstrip(self.cmd_prefix)
             else:
