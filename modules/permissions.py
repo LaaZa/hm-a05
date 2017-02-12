@@ -65,9 +65,8 @@ class Permissions:
         permissions_dict = {}
         for permission in permissions_tuple:
             permissions_dict[permission] = True
-
-        permissions = discord.Permissions(permissions_dict)
-
+        permissions = discord.Permissions.none()
+        permissions.update(**permissions_dict)
         if channel:
             return member.permissions_in(channel).is_subset(permissions)
 
