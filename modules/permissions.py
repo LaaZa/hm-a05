@@ -68,7 +68,7 @@ class Permissions:
         permissions = discord.Permissions.none()
         permissions.update(**permissions_dict)
         if channel:
-            return member.permissions_in(channel).is_subset(permissions)
+            return member.permissions_in(channel).is_superset(permissions)
 
         return member.server_permissions.is_subset(permissions)
 
