@@ -3,13 +3,15 @@ import sys
 import re
 import json
 import traceback
-import types
 from collections import OrderedDict, defaultdict, deque
 import importlib as imp
 import importlib.machinery
+
+import collections
+
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
-import discord
+
 
 class PluginLoader:
 
@@ -64,7 +66,7 @@ class PluginLoader:
                         for hooked in self.hooks.get(fname, ''):
                             self.plugin_queue.append((self.plugins.get(hooked), fname))
                             Globals.log.debug('Hook plugin added')
-                elif not is_command and isinstance(trigger, types.FunctionType) and trigger(**kwargs):
+                elif not is_command and isinstance(trigger, collections.Callable) and trigger(**kwargs):
                     self.plugin_queue.append((plugin, event, trigger, fn))
                     if fname in self.hooks.keys():
                         for hooked in self.hooks.get(fname, ''):
@@ -144,7 +146,7 @@ class PluginLoader:
                         break
                 except Exception as err:
                     status = -2
-                    Globals.log.error('Plugin \'' + fname + '\' load failed: ' + str(err))
+                    Globals.log.error('Plugin \'' + fname + '\' load failed: ' + str(err) + traceback.format_exc())
                     continue
             sys.path.pop(0)
         except Exception as err:
