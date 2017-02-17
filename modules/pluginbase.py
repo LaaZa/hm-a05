@@ -76,19 +76,25 @@ class PluginBase:
             except (IndexError, ValueError):
                 return default
 
-        def keyword_commands(self, keywords=()):
+        def keyword_commands(self, keywords=(), strip=False):
             indx = []
             keyword_values = {}
             for keyword in keywords:
-                i = self.message_content.find(keyword)
+                i = self.message_content.find(keyword + ':')
                 if i > -1:
                     indx.append((keyword, i))
             indx = sorted(indx, key=itemgetter(1))
             for i in range(len(indx)):
                 if i == 0:
-                    keyword_values.update({indx[i - 1][0]: self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):].strip(':')})
+                    if strip:
+                        keyword_values.update({indx[i - 1][0]: (self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):].strip(':')).strip()})
+                    else:
+                        keyword_values.update({indx[i - 1][0]: self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):].strip(':')})
                 else:
-                    keyword_values.update({indx[i - 1][0]: self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):indx[i][1]].strip(':')})
+                    if strip:
+                        keyword_values.update({indx[i - 1][0]: (self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):indx[i][1]].strip(':')).strip()})
+                    else:
+                        keyword_values.update({indx[i - 1][0]: self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):indx[i][1]].strip(':')})
             Globals.log.debug(f'keyword_values: {keyword_values}')
             return keyword_values
 
