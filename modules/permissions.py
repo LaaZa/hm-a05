@@ -73,4 +73,4 @@ class Permissions:
         return member.server_permissions.is_subset(permissions)
 
     def client_has_discord_permissions(self, permissions_tuple: tuple, channel):
-        return self.has_discord_permissions(channel.server.get_member(Globals.disco.user.id), permissions_tuple, channel=channel)
+        return self.has_discord_permissions(channel.server.me, permissions_tuple, channel=channel)
