@@ -6,6 +6,7 @@ import traceback
 from collections import OrderedDict, defaultdict, deque
 import importlib as imp
 import importlib.machinery
+import importlib.util
 
 import collections
 
@@ -119,8 +120,9 @@ class PluginLoader:
                         plugins_dirs.append((entry.path, entry.name))
             for path, fname in plugins_dirs:
                 try:
-                    loader = imp.machinery.SourceFileLoader(fname, path + '/' + fname + '.py')
-                    mod = loader.load_module()
+                    spec = importlib.util.spec_from_file_location(fname, path + '/' + fname + '.py')
+                    mod = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
                     self.modules.update({fname: mod})
                     plugin = mod.Plugin()
                     try:  # test plugin for required params
@@ -156,9 +158,10 @@ class PluginLoader:
             self.order()
         return status
 
-    def unload_plugin(self, plugin):
+    def unload_plugin(self, plugin, force=False):
         if plugin in self.plugins.keys():
-            if self.plugins[plugin].type is not PluginBase.PluginType.CORE:
+            if force or self.plugins[plugin].type is not PluginBase.PluginType.CORE:
+                self.modules.pop(plugin)
                 self.plugins.pop(plugin)
                 Globals.log.info('Plugin unloaded: ' + plugin)
                 return 1
@@ -169,10 +172,14 @@ class PluginLoader:
     def reload_plugin(self, plugin):
         if plugin in self.plugins.keys() and plugin in self.modules.keys():
             try:
-                mod = imp.reload(self.modules.get(plugin))
-                self.modules.update({plugin: mod})
-                self.plugins.update({plugin: mod.Plugin()})
-                return 1
+                #mod = imp.reload(self.modules.get(plugin))
+                if self.unload_plugin(plugin, True) == 1:
+                    if self.load_plugins(plugin) == 1:
+                        return 1
+                    else:
+                        raise Exception
+                #self.modules.update({plugin: mod})
+                #self.plugins.update({plugin: mod.Plugin()})
             except Exception as err:
                 Globals.log.error('Plugin \'' + plugin + '\' reload failed: ' + str(err) + traceback.format_exc())
                 return -2
@@ -267,4 +274,7 @@ class PluginLoader:
                 self.hooks[hook] = [x for x in hooked if x in self.plugins.keys()]
 
     def plugin_to_fname(self, plugin):
-        return list(self.plugins.keys())[list(self.plugins.values()).index(plugin)]
+        try:
+            return list(self.plugins.keys())[list(self.plugins.values()).index(plugin)]
+        except ValueError:
+            return ''
