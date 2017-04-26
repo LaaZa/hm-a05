@@ -30,6 +30,9 @@ class Permissions:
     def has_permission(self, user, permission_level):
         return self.user_levels.get(user.id, False) >= permission_level
 
+    def is_admin(self, user):
+        return self.has_permission(user, self.PermissionLevel.admin)
+
     def add_permission(self, user, permission_level):
         self.user_levels.update({user.id: permission_level})
         self._database_add_permission(user, permission_level)
