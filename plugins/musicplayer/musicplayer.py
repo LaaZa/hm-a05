@@ -248,7 +248,7 @@ class Plugin(PluginBase):
             if state.player.thumbnail:
                 embed.set_thumbnail(url=state.player.thumbnail)
             embed.set_footer(text=service)
-            self.last_info_card[message.server] = await Globals.disco.send_message(message.server, embed=embed)
+            self.last_info_card[message.server] = await Globals.disco.send_message(message.channel, embed=embed)
 
     async def sub_add(self, message):
         msg = self.Command(message)
@@ -316,11 +316,11 @@ class Plugin(PluginBase):
             info = await Globals.disco.loop.run_in_executor(None, func)
         except youtube_dl.DownloadError as e:
             Globals.log.error(f'Could not add items from the playlist {str(e)}')
-            await Globals.disco.send_message(message.server, 'Could not add items from the playlist :<')
+            await Globals.disco.send_message(message.channel, 'Could not add items from the playlist :<')
             return None
         if info.get('_type') == 'playlist' and len(info.get('entries')) > 1:
             info_out = info
-            await Globals.disco.send_message(message.server, 'Adding items from the playlist')
+            await Globals.disco.send_message(message.channel, 'Adding items from the playlist')
 
             #  generated playlists do not have title, we will use search query instead without part before :
             if not info.get('title'):
@@ -353,7 +353,7 @@ class Plugin(PluginBase):
                 entry_info = await Globals.disco.loop.run_in_executor(None, func)
             except youtube_dl.DownloadError as e:
                 Globals.log.error(f'Could not add items from the playlist {str(e)}')
-                await Globals.disco.send_message(message.server, 'Could not add the item :<')
+                await Globals.disco.send_message(message.channel, 'Could not add the item :<')
                 return None
             #  search results can be playlists with only one entry
             if entry_info.get('entries') and len(entry_info.get('entries')) == 1:
@@ -430,7 +430,7 @@ class Plugin(PluginBase):
                 Globals.log.info(f'No players were added')
                 return None
         else:
-            await Globals.disco.send_message(message.server, 'I\'m not on a voice channel')
+            await Globals.disco.send_message(message.channel, 'I\'m not on a voice channel')
             return None
 
     async def pause(self, message):
