@@ -1,6 +1,8 @@
-from modules.pluginbase import PluginBase
-from modules.globals import Globals
 import urbandictionary as ud
+
+from modules.globals import Globals
+from modules.pluginbase import PluginBase
+
 
 class Plugin(PluginBase):
     # plugin specific
@@ -17,8 +19,8 @@ class Plugin(PluginBase):
         try:
             msg = self.Command(message)
             defs = ud.define(' '.join(msg.parts[1:]))
-            await Globals.disco.send_message(message.channel, defs[0].definition)
+            await message.channel.send(defs[0].definition)
         except Exception as e:
             Globals.log.error(f'Viesti: {str(e)}')
-            await Globals.disco.send_message(message.channel, 'Something went wrong')
+            await message.channel.send('Something went wrong')
             return False

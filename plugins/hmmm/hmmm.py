@@ -1,9 +1,12 @@
-from modules.pluginbase import PluginBase
-from modules.globals import Globals
-import feedparser
 import random
 import re
+from collections import defaultdict
+
 import discord
+import feedparser
+
+from modules.globals import Globals
+from modules.pluginbase import PluginBase
 
 
 class Plugin(PluginBase):
@@ -17,18 +20,21 @@ class Plugin(PluginBase):
         self.trigger = t.functions
         self.help = 'Hmmm'
 
+        self.prev_links = defaultdict(list)
+
     async def on_message(self, message, trigger):
         try:
-            limit = '200'
+            limit = '100'
             msg = self.Command(message)
             d = feedparser.parse(f'http://www.reddit.com/r/hmmm/.rss?limit={limit}')
             body = random.choice(d.entries)['content'][0]['value']
             image_link = re.findall(r'<span><a href="(.*?)">\[link\]</a>', body)[0]
+
             embed = discord.Embed()
             embed.set_image(url=image_link)
             embed.set_footer(text='Hmmm')
-            await Globals.disco.send_message(message.channel, embed=embed)
+            await message.channel.send(embed=embed)
         except Exception as e:
             Globals.log.error(f'Could not hmmm: {str(e)}')
-            await Globals.disco.send_message(message.channel, 'Hmmm')
+            await message.channel.send('Hmmm')
             return False

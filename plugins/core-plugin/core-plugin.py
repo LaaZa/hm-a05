@@ -1,6 +1,6 @@
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
-import discord
+
 
 class Plugin(PluginBase):
     # plugin specific
@@ -23,13 +23,13 @@ class Plugin(PluginBase):
         }
 
     async def on_message(self, message, trigger):
-            msg = self.Command(message)
-            try:
-                await self.subcommands.get(msg.parts[1])(message, trigger)
-                return True
-            except Exception as e:
-                Globals.log.error(f'No subcommand: {str(e)}')
-                return False
+        msg = self.Command(message)
+        try:
+            await self.subcommands.get(msg.parts[1])(message, trigger)
+            return True
+        except Exception as e:
+            Globals.log.error(f'No subcommand: {str(e)}')
+            return False
 
     async def commands(self, message, trigger):
         commands = []
@@ -40,97 +40,97 @@ class Plugin(PluginBase):
                         commands.append(evn[0])
             except IndexError:
                 pass
-        await Globals.disco.send_message(message.channel, f"Available commands: {', '.join(commands)}")
+        await message.channel.send(f"Available commands: {', '.join(commands)}")
 
     async def load(self, message, trigger):
         if not Globals.permissions.has_permission(message.author, Globals.permissions.PermissionLevel.admin):
-            await Globals.disco.send_message(message.channel, 'You need admin rights for this command')
+            await message.channel.send('You need admin rights for this command')
             return
         msg = self.Command(message)
         if msg.word(1):
             plugin = Globals.pluginloader.load_plugins(msg.words(1))
             if plugin == 1:
-                await Globals.disco.send_message(message.channel, f'Loaded plugin: {msg.words(1)}')
+                await message.channel.send(f'Loaded plugin: {msg.words(1)}')
             elif plugin == 2 and msg.word(1) == '*':
-                await Globals.disco.send_message(message.channel, 'Loaded plugins: ' + ''.join('{} '.format(key) for key in Globals.pluginloader.plugins.keys()))
+                await message.channel.send('Loaded plugins: ' + ''.join('{} '.format(key) for key in Globals.pluginloader.plugins.keys()))
             elif plugin == -1:
-                await Globals.disco.send_message(message.channel, 'Plugin already loaded')
+                await message.channel.send('Plugin already loaded')
             elif plugin == -2:
-                await Globals.disco.send_message(message.channel, 'Could not load, plugin is throwing an error')
+                await message.channel.send('Could not load, plugin is throwing an error')
             else:
-                await Globals.disco.send_message(message.channel, 'No such plugin')
+                await message.channel.send('No such plugin')
         else:
-            await Globals.disco.send_message(message.channel, 'You must state the name of the plugin')
+            await message.channel.send('You must state the name of the plugin')
 
     async def unload(self, message, trigger):
         if not Globals.permissions.has_permission(message.author, Globals.permissions.PermissionLevel.admin):
-            await Globals.disco.send_message(message.channel, 'You need admin rights for this command')
+            await message.channel.send('You need admin rights for this command')
             return
         msg = self.Command(message)
         if msg.word(1):
             plugin = Globals.pluginloader.unload_plugin(msg.words(1))
             if plugin == 1:
-                await Globals.disco.send_message(message.channel, f'Unloaded plugin: {msg.words(1)}')
+                await message.channel.send(f'Unloaded plugin: {msg.words(1)}')
             elif plugin == -1:
-                await Globals.disco.send_message(message.channel, 'Cannot unload a CORE type plugin')
+                await message.channel.send('Cannot unload a CORE type plugin')
             else:
-                await Globals.disco.send_message(message.channel, 'No such plugin')
+                await message.channel.send('No such plugin')
         else:
-            await Globals.disco.send_message(message.channel, 'You must state the name of the plugin')
+            await message.channel.send('You must state the name of the plugin')
 
     async def reload(self, message, trigger):
         if not Globals.permissions.has_permission(message.author, Globals.permissions.PermissionLevel.admin):
-            await Globals.disco.send_message(message.channel, 'You need admin rights for this command')
+            await message.channel.send('You need admin rights for this command')
             return
         msg = self.Command(message)
         if msg.word(1):
             plugin = Globals.pluginloader.reload_plugin(msg.words(1))
             if plugin == 1:
-                await Globals.disco.send_message(message.channel, f'reloaded plugin: {msg.words(1)}')
+                await message.channel.send(f'reloaded plugin: {msg.words(1)}')
             elif plugin == -2:
-                await Globals.disco.send_message(message.channel, 'Could not reload, plugin is throwing an error')
+                await message.channel.send('Could not reload, plugin is throwing an error')
             else:
-                await Globals.disco.send_message(message.channel, 'No such plugin')
+                await message.channel.send('No such plugin')
         else:
-            await Globals.disco.send_message(message.channel, 'You must state the name of the plugin')
+            await message.channel.send('You must state the name of the plugin')
 
     async def enable(self, message, trigger):
         if not self.is_channel_admin(message.author, message.channel):
-            await Globals.disco.send_message(message.channel, 'You need channel management rights for this command')
+            await message.channel.send('You need channel management rights for this command')
             return
         msg = self.Command(message)
         if msg.word(1):
             plugin = Globals.pluginloader.enable(msg.words(1), message.channel)
             if plugin == 1:
-                await Globals.disco.send_message(message.channel, f'Enabled plugin: {msg.words(1)}')
+                await message.channel.send(f'Enabled plugin: {msg.words(1)}')
             elif plugin == 2:
-                await Globals.disco.send_message(message.channel, 'Plugin already enabled')
+                await message.channel.send('Plugin already enabled')
             else:
-                await Globals.disco.send_message(message.channel, 'No such plugin loaded')
+                await message.channel.send('No such plugin loaded')
         else:
-            await Globals.disco.send_message(message.channel, 'You must state the name of the plugin')
+            await message.channel.send('You must state the name of the plugin')
 
     async def disable(self, message, trigger):
         if not self.is_channel_admin(message.author, message.channel):
-            await Globals.disco.send_message(message.channel, 'You need channel management rights for this command')
+            await message.channel.send('You need channel management rights for this command')
             return
         msg = self.Command(message)
         if msg.word(1):
             plugin = Globals.pluginloader.disable(msg.words(1), message.channel)
             if plugin == 1:
-                await Globals.disco.send_message(message.channel, f'Disabled plugin: {msg.words(1)}')
+                await message.channel.send(f'Disabled plugin: {msg.words(1)}')
             elif plugin == -1:
-                await Globals.disco.send_message(message.channel, 'Cannot disable a CORE type plugin')
+                await message.channel.send('Cannot disable a CORE type plugin')
             elif plugin == 2:
-                await Globals.disco.send_message(message.channel, 'Plugin already disabled')
+                await message.channel.send('Plugin already disabled')
             else:
-                await Globals.disco.send_message(message.channel, 'No such plugin loaded')
+                await message.channel.send('No such plugin loaded')
         else:
-            await Globals.disco.send_message(message.channel, 'You must state the name of the plugin')
+            await message.channel.send('You must state the name of the plugin')
 
     def is_channel_admin(self, user, channel):
         #  global bot admin is above channel admin
         if Globals.permissions.has_permission(user, Globals.permissions.PermissionLevel.admin):
             return True
-        #  channel management rights suffice as "channel admin"
+        # channel management rights suffice as "channel admin"
         return Globals.permissions.has_discord_permissions(user, ('manage_channels',), channel=channel)

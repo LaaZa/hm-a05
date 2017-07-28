@@ -26,11 +26,11 @@ class Plugin(PluginBase):
             if req:
                 answer = await self.api.all(3)
                 if answer:
-                    await Globals.disco.send_message(message.channel, '\n'.join(answer))
+                    await message.channel.send('\n'.join(answer))
                 else:
-                    await Globals.disco.send_message(message.channel, 'No one knows!')
+                    await message.channel.send('No one knows!')
         else:
-            await Globals.disco.send_messgae(message.channel, 'I found exactly what you were looking for: NOTHING!')
+            await message.channel.send('I found exactly what you were looking for: NOTHING!')
         return True
         #except Exception as e:
         #       Globals.log.error(f'Could not query wolframalpha: {str(e)}')

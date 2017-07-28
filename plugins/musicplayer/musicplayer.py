@@ -1,14 +1,18 @@
+import functools
+import re
+import struct
+import urllib.parse
+from collections import deque, defaultdict
+from datetime import timedelta
 from random import shuffle
 
-from modules.pluginbase import PluginBase
-from modules.globals import Globals
-from datetime import timedelta
-import urllib.parse
+import aiohttp
 import discord
-from plugins.musicplayer.audioplayer import *
-import functools
-from collections import deque, defaultdict
 import youtube_dl
+
+from modules.globals import Globals
+from modules.pluginbase import PluginBase
+from plugins.musicplayer.audioplayer import *
 
 
 class Plugin(PluginBase):
@@ -76,12 +80,12 @@ class Plugin(PluginBase):
                         if self._has_permission(message, subcmd):
                             await self.subcommands.get(subcmd.lower(), lambda x: True)(message)
                         else:
-                            await Globals.disco.send_message(message.channel, f'{message.author.mention} you have no permission to use that command')
+                            await message.channel.send(f'{message.author.mention} you have no permission to use that command')
                     return True
             else:
                 return False
         else:
-            await Globals.disco.send_message(message.channel, 'I\'m not on a voice channel')
+            await message.channel.send('I\'m not on a voice channel')
 
     '''
     UTILITY FUNCTIONS
@@ -126,6 +130,31 @@ class Plugin(PluginBase):
                 for cmds in self.role_permissions.get(message.server.id).get(role.id):
                     if command in cmds:
                         return True
+
+    async def get_stream_info(self, url):
+
+        info = {'title': '', 'name': ''}
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers={'Icy-MetaData': '1'}) as response:
+                    metaint = int(response.headers['icy-metaint'])
+                    for _ in range(1):
+                        await response.content.read(metaint)
+                        metadata_length = struct.unpack('B', await response.content.read(1))[0] * 16
+                        metadata = await response.content.read(metadata_length)
+                        metadata = metadata.rstrip(b'\0')
+
+                        m = re.search(br"StreamTitle='([^']*)';", metadata)
+                        if m:
+                            title = m.group(1)
+                            if title:
+                                info['title'] = title.decode('latin1')
+                                info['name'] = response.headers['icy-name']
+                                break
+        except Exception:
+            pass
+
+        return info
     '''
     SUBCOMMANDS
     '''
@@ -133,7 +162,7 @@ class Plugin(PluginBase):
     async def sub_permissions(self, message):
         p = Globals.permissions
         if not (p.has_permission(message.author, p.PermissionLevel.admin) or p.has_discord_permissions(message.author, ('manage_channels',), message.channel)):
-            await Globals.disco.send_message(message.channel, 'You have no rights to manage permissions')
+            await message.channel.send('You have no rights to manage permissions')
             return
         msg = self.Command(message, clean=True)
         kwrds = msg.keyword_commands(('roles', 'commands'))
@@ -174,22 +203,22 @@ class Plugin(PluginBase):
                 else:
                     self.role_permissions[message.server.id][role.id] = final_list
             Globals.log.debug(self.role_permissions)
-            await Globals.disco.send_message(message.channel, 'Changed permissions')
+            await message.channel.send('Changed permissions')
 
         else:
-            await Globals.disco.send_message(message.channel, 'You need to specify roles: @role and commands: add pause -stop')
+            await message.channel.send('You need to specify roles: @role and commands: add pause -stop')
 
     async def sub_shuffle(self, message):
         if len(self.playlist_to_add.get(message.server, deque())) <= 1:
-            await Globals.disco.send_message(message.channel, 'The playlist doesn\'t have enough items to shuffle')
+            await message.channel.send('The playlist doesn\'t have enough items to shuffle')
             return
         shuffle(self.playlist_to_add.get(message.server, deque()))
-        await Globals.disco.send_message(message.channel, 'シャッフル！ The playlist ain\'t what it used to be')
+        await message.channel.send('シャッフル！ The playlist ain\'t what it used to be')
 
     async def sub_volume(self, message):
         state = self.get_audio_state(message.server)
         if state.current is None:
-            await Globals.disco.send_message(message.channel, f'I\'m not playing music')
+            await message.channel.send(f'I\'m not playing music')
             return
         cur_volume = state.player.volume * 100
         msg = self.Command(message)
@@ -207,20 +236,20 @@ class Plugin(PluginBase):
                 if 0 < int(vol) <= 100:
                     value = int(vol)
             else:
-                await Globals.disco.send_message(message.channel, f'Current volume is {cur_volume}%')
+                await message.channel.send(f'Current volume is {cur_volume}%')
                 return
         else:
-            await Globals.disco.send_message(message.channel, f'Current volume is {cur_volume}%')
+            await message.channel.send(f'Current volume is {cur_volume}%')
             return
 
         if state.is_playing():
             state.player.volume = value / 100
-            await Globals.disco.send_message(message.channel, f'Volume is now {state.player.volume * 100}%')
+            await message.channel.send(f'Volume is now {state.player.volume * 100}%')
 
     async def sub_playing(self, message):
         state = self.get_audio_state(message.server)
         if state.current is None or not state.is_playing():
-            await Globals.disco.send_message(message.channel, f'Not playing anything right now')
+            await message.channel.send(f'Not playing anything right now')
         else:
             title = state.player.title
             try:
@@ -248,7 +277,7 @@ class Plugin(PluginBase):
             if state.player.thumbnail:
                 embed.set_thumbnail(url=state.player.thumbnail)
             embed.set_footer(text=service)
-            self.last_info_card[message.server] = await Globals.disco.send_message(message.channel, embed=embed)
+            self.last_info_card[message.server] = await message.channel.send(embed=embed)
 
     async def sub_add(self, message):
         msg = self.Command(message)
@@ -263,15 +292,15 @@ class Plugin(PluginBase):
             media_info = await self.add_to_queue(message, url)
             if media_info:
                 if media_info.get('duration'):
-                    await Globals.disco.send_message(message.channel, f'Added {"next " if media_info.get("next") else ""}**{media_info.get("title")}** [{str(timedelta(seconds=media_info.get("duration")))}] to playlist')
+                    await message.channel.send(f'Added {"next " if media_info.get("next") else ""}**{media_info.get("title")}** [{str(timedelta(seconds=media_info.get("duration")))}] to playlist')
                 elif media_info.get('_type') == 'playlist':
-                    await Globals.disco.send_message(message.channel, f'Added {"next " if media_info.get("next") else ""}{len(media_info.get("entries"))} items from **{media_info.get("title")}** to playlist')
+                    await message.channel.send(f'Added {"next " if media_info.get("next") else ""}{len(media_info.get("entries"))} items from **{media_info.get("title")}** to playlist')
                 else:
-                    await Globals.disco.send_message(message.channel, f'Added {"next " if media_info.get("next") else ""}**{media_info.get("title")}** to playlist')
+                    await message.channel.send(f'Added {"next " if media_info.get("next") else ""}**{media_info.get("title")}** to playlist')
                 if Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
                     await Globals.disco.delete_message(message)
         else:
-            await Globals.disco.send_message(message.channel, 'I need proper url :/')
+            await message.channel.send('I need proper url :/')
 
     async def sub_play(self, message):
         state = self.get_audio_state(message.server)
@@ -279,7 +308,7 @@ class Plugin(PluginBase):
             await self.resume(message)
         else:
             if state.deck.empty() and not state.is_playing():
-                await Globals.disco.send_message(message.channel, 'The playlist is empty :<')
+                await message.channel.send('The playlist is empty :<')
 
     async def sub_next(self, message):
         await self.next(message)
@@ -316,11 +345,11 @@ class Plugin(PluginBase):
             info = await Globals.disco.loop.run_in_executor(None, func)
         except youtube_dl.DownloadError as e:
             Globals.log.error(f'Could not add items from the playlist {str(e)}')
-            await Globals.disco.send_message(message.channel, 'Could not add items from the playlist :<')
+            await message.channel.send('Could not add items from the playlist :<')
             return None
         if info.get('_type') == 'playlist' and len(info.get('entries')) > 1:
             info_out = info
-            await Globals.disco.send_message(message.channel, 'Adding items from the playlist')
+            await message.channel.send('Adding items from the playlist')
 
             #  generated playlists do not have title, we will use search query instead without part before :
             if not info.get('title'):
@@ -353,7 +382,7 @@ class Plugin(PluginBase):
                 entry_info = await Globals.disco.loop.run_in_executor(None, func)
             except youtube_dl.DownloadError as e:
                 Globals.log.error(f'Could not add items from the playlist {str(e)}')
-                await Globals.disco.send_message(message.channel, 'Could not add the item :<')
+                await message.channel.send('Could not add the item :<')
                 return None
             #  search results can be playlists with only one entry
             if entry_info.get('entries') and len(entry_info.get('entries')) == 1:
@@ -417,6 +446,17 @@ class Plugin(PluginBase):
                     func = functools.partial(player.yt.extract_info,  entry_info.get("webpage_url") or entry_info.get("url"), download=False)
                     info = await Globals.disco.loop.run_in_executor(None, func)
 
+                    stream_info = await self.get_stream_info(entry_info.get('url'))
+                    if stream_info.get('name'):
+                        entry_info['title'] = stream_info.get('name') + ':\n' + stream_info.get('title') or entry_info.get('title')
+                    else:
+                        entry_info['title'] = stream_info.get('title') or entry_info.get('title')
+
+                    Globals.log.debug(f'streaminfo {stream_info}')
+
+                    if stream_info.get('name'):
+                        entry_info['is_live'] = 1
+
                     player.thumbnail = info.get('thumbnail')
                 else:
                     player.thumbnail = entry_info.get('thumbnail')
@@ -430,7 +470,7 @@ class Plugin(PluginBase):
                 Globals.log.info(f'No players were added')
                 return None
         else:
-            await Globals.disco.send_message(message.channel, 'I\'m not on a voice channel')
+            await message.channel.send('I\'m not on a voice channel')
             return None
 
     async def pause(self, message):
@@ -452,6 +492,8 @@ class Plugin(PluginBase):
         Globals.log.error('Musicplayer Next')
 
     async def update_status(self, channel, status):
+        return
+        '''
         current_song = self.get_audio_state(channel.server).player
         if status is AudioStatus.PLAYING:
             game = discord.Game(name=f'[▶]{current_song.title}', type=int(current_song.is_live))
@@ -460,4 +502,5 @@ class Plugin(PluginBase):
         else:
             game = None
 
-        await Globals.disco.change_presence(game=game)
+        await Globals.disco.change_presence(game=game)'''
+

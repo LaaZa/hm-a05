@@ -1,6 +1,5 @@
-from modules.globals import Globals
-from modules.pluginbase import PluginBase
 import modules.version as version
+from modules.pluginbase import PluginBase
 
 
 class Plugin(PluginBase):
@@ -16,5 +15,5 @@ class Plugin(PluginBase):
         self.help = 'Show version information'
 
     async def on_message(self, message, trigger):
-        await Globals.disco.send_message(message.channel, f'Miharu [HM-A05] {version.get_version()} by {version.get_author()}')
+        await message.channel.send(f'Miharu [HM-A05] {version.get_version()} by {version.get_author()}')
         return True

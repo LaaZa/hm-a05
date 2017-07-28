@@ -1,6 +1,5 @@
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
-import discord
 
 
 class Plugin(PluginBase):
@@ -15,18 +14,18 @@ class Plugin(PluginBase):
         self.help = 'Post bot invite link for convenience'
 
     async def on_message(self, message, trigger):
-            try:
-                if Globals.permissions.is_admin(message.author):
-                    msg = self.Command(message)
-                    if msg.word(0):
-                        for mention in message.mentions:
-                            await Globals.disco.send_message(mention, f'https://discordapp.com/oauth2/authorize?&client_id={Globals.disco.user.id}&scope=bot&permissions=2146958591')
-                    else:
-                        await Globals.disco.send_message(message.author, f'https://discordapp.com/oauth2/authorize?&client_id={Globals.disco.user.id}&scope=bot&permissions=2146958591')
-                    return True
+        try:
+            if Globals.permissions.is_admin(message.author):
+                msg = self.Command(message)
+                if msg.word(0):
+                    for mention in message.mentions:
+                        await mention.send(f'https://discordapp.com/oauth2/authorize?&client_id={Globals.disco.user.id}&scope=bot&permissions=2146958591')
                 else:
-                    await Globals.disco.send_message(message.channel, 'You have no permissions for this :<')
+                    await message.author.send(f'https://discordapp.com/oauth2/authorize?&client_id={Globals.disco.user.id}&scope=bot&permissions=2146958591')
                 return True
-            except Exception as e:
-                Globals.log.error(f'Could not send invite link: {str(e)}')
-                return False
+            else:
+                await message.channel.send('You have no permissions for this :<')
+            return True
+        except Exception as e:
+            Globals.log.error(f'Could not send invite link: {str(e)}')
+            return False

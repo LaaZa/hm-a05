@@ -14,20 +14,20 @@ class Plugin(PluginBase):
         self.help = 'Manage admin rights'
 
     async def on_message(self, message, trigger):
-            if message.channel.is_private:
-                try:
-                    await Globals.disco.send_message(message.channel, 'Please say the admin token')
-                    msg = await Globals.disco.wait_for_message(timeout=10, channel=message.channel, author=message.author)
-                    if Globals.permissions.validate_token(msg.content.strip()):
-                        Globals.permissions.add_permission(message.author, Globals.permissions.PermissionLevel.admin)
-                        await Globals.disco.send_message(message.channel, 'You are now admin!')
-                    else:
-                        await Globals.disco.send_message(message.channel, 'Invalid token :/')
+        if message.channel.is_private:
+            try:
+                await message.channel.send('Please say the admin token')
+                msg = await Globals.disco.wait_for_message(timeout=10, channel=message.channel, author=message.author)
+                if Globals.permissions.validate_token(msg.content.strip()):
+                    Globals.permissions.add_permission(message.author, Globals.permissions.PermissionLevel.admin)
+                    await message.channel.send('You are now admin!')
+                else:
+                    await message.channel.send('Invalid token :/')
 
-                    return True
-                except Exception as e:
-                    Globals.log.error(f'Could not validate as an admin: {str(e)}')
-                    return False
-            else:
-                await Globals.disco.send_message(message.channel, 'Works only in private!')
                 return True
+            except Exception as e:
+                Globals.log.error(f'Could not validate as an admin: {str(e)}')
+                return False
+        else:
+            await message.channel.send('Works only in private!')
+            return True

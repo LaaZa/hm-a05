@@ -35,8 +35,8 @@ class Events:
             Globals.log.info(f'Logged in: {Globals.disco.user.name} id: {Globals.disco.user.id}')
 
         @Globals.disco.event
-        async def on_server_join(server):
-            Globals.log.info(f'Joined Server: {server.name}')
+        async def on_guild_join(guild):
+            Globals.log.info(f'Joined guild: {guild.name}')
 
         @Globals.disco.event
         async def on_member_join(member):
@@ -44,7 +44,7 @@ class Events:
                 await Globals.pluginloader.generate_plugin_queue('on_member_join', member=member)
                 status = True
                 while status:
-                    if await Globals.pluginloader.execute_plugin_queue(channel=member.server.default_channel, member=member) == -1:
+                    if await Globals.pluginloader.execute_plugin_queue(channel=member.guild.default_channel, member=member) == -1:
                         status = False
 
         @Globals.disco.event
@@ -53,7 +53,7 @@ class Events:
                 await Globals.pluginloader.generate_plugin_queue('on_member_remove', member=member)
                 status = True
                 while status:
-                    if await Globals.pluginloader.execute_plugin_queue(channel=member.server.default_channel, member=member) == -1:
+                    if await Globals.pluginloader.execute_plugin_queue(channel=member.guild.default_channel, member=member) == -1:
                         status = False
 
         @Globals.disco.event
@@ -62,7 +62,7 @@ class Events:
                 await Globals.pluginloader.generate_plugin_queue('on_member_update', before=member_before, after=member_after)
                 status = True
                 while status:
-                    if await Globals.pluginloader.execute_plugin_queue(channel=member_after.server.default_channel,
+                    if await Globals.pluginloader.execute_plugin_queue(channel=member_after.guild.default_channel,
                                                                        before=member_before, after=member_after) == -1:
                         status = False
 

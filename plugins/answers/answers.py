@@ -1,6 +1,7 @@
+import re
+
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
-import re
 
 
 class Plugin(PluginBase):
@@ -21,7 +22,7 @@ class Plugin(PluginBase):
         msg = self.Command(message)
         try:
             if not Globals.permissions.has_permission(message.author, Globals.permissions.PermissionLevel.admin):
-                await Globals.disco.send_message(message.channel, 'You need admin permission :<')
+                await message.channel.send('You need admin permission :<')
                 return True
             if msg.word(0) and msg.words(1):
                 self.answers.update({re.compile(msg.word(0)): msg.words(1)})
@@ -34,9 +35,9 @@ class Plugin(PluginBase):
             match = re.search(regex, message.content)
             if match:
                 try:
-                    await Globals.disco.send_message(message.channel, answer.format(*match.groups()))
+                    await message.channel.send(answer.format(*match.groups()))
                     return True
                 except IndexError:
-                    await Globals.disco.send_message(message.channel, answer)
+                    await message.channel.send(answer)
                     return True
         return False

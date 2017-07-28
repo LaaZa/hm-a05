@@ -1,6 +1,6 @@
+from modules import upsidedown as upd
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
-from modules import upsidedown as upd
 
 
 class Plugin(PluginBase):
@@ -18,9 +18,9 @@ class Plugin(PluginBase):
         try:
             msg = self.Command(message)
             text = ' '.join(msg.parts[1:])
-            await Globals.disco.send_message(message.channel, upd.flip(text))
+            await message.channel.send(upd.flip(text))
             return True
         except Exception as e:
             Globals.log.error(f'Could not flip and send the message: {str(e)}')
-            await Globals.disco.send_message(message.channel, 'Something went wrong')
+            await message.channel.send('Something went wrong')
             return False

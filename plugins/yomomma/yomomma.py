@@ -1,7 +1,10 @@
+import json
+
+import aiohttp
+
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
-import json
-import aiohttp
+
 
 class Plugin(PluginBase):
     # plugin specific
@@ -20,8 +23,8 @@ class Plugin(PluginBase):
                 async with session.get('http://api.yomomma.info/') as resp:
                     data = await resp.text()
             data = json.loads(data)
-            await Globals.disco.send_message(message.channel, data['joke'])
+            await message.channel.send(data['joke'])
         except Exception as e:
             Globals.log.error(f'Could not retrieve the joke: {str(e)}')
-            await Globals.disco.send_message(message.channel, 'Something went wrong')
+            await message.channel.send('Something went wrong')
             return False

@@ -1,7 +1,9 @@
-from modules.pluginbase import PluginBase
-from modules.globals import Globals
-import aiohttp
 import json
+
+import aiohttp
+
+from modules.globals import Globals
+from modules.pluginbase import PluginBase
 
 
 class Plugin(PluginBase):
@@ -25,9 +27,9 @@ class Plugin(PluginBase):
             community = 'Community is up' if data['SteamCommunity']['online'] else 'Community is down'
             gc = 'Dota 2 game coordinator is up' if data['ISteamGameCoordinator']['570']['online'] else 'Dota 2 game coordinator is down.'
             csgc = 'CSGO game coordinator is up' if data['ISteamGameCoordinator']['730']['online'] else 'CSGO game coordinator is down.'
-            await Globals.disco.send_message(message.channel, f'{status}\n{community}\n{gc}\n{csgc}')
+            await message.channel.send(f'{status}\n{community}\n{gc}\n{csgc}')
         except Exception as e:
             Globals.log.error(f'Could not get Steam status: {str(e)}')
-            await Globals.disco.send_message(message.channel, 'Something went wrong')
+            await message.channel.send('Something went wrong')
             return False
 

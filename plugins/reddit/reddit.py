@@ -1,6 +1,8 @@
-from modules.pluginbase import PluginBase
-from modules.globals import Globals
 import feedparser
+
+from modules.globals import Globals
+from modules.pluginbase import PluginBase
+
 
 class Plugin(PluginBase):
     # plugin specific
@@ -19,12 +21,12 @@ class Plugin(PluginBase):
             if len(msg.parts) > 1:
                 path = '/r/' + ' '.join(msg.parts[1:]) + '/.rss'
                 d = feedparser.parse('http://www.reddit.com' + path)
-                await Globals.disco.send_message(message.channel, d.entries[0]['link'])
+                await message.channel.send(d.entries[0]['link'])
             else:
                 d = feedparser.parse('http://www.reddit.com/.rss')
-                await Globals.disco.send_message(message.channel, d.entries[0]['link'])
+                await message.channel.send(d.entries[0]['link'])
             return True
         except Exception as e:
             Globals.log.error(f'Could not get the top post: {str(e)}')
-            await Globals.disco.send_message(message.channel, 'Something went wrong')
+            await message.channel.send('Something went wrong')
             return False

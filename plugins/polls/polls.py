@@ -1,14 +1,14 @@
+import asyncio
 from collections import OrderedDict
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-import asyncio
+import dateparser
 import discord
 
-from modules.pluginbase import PluginBase
 from modules.globals import Globals
-import dateparser
-import emoji
+from modules.pluginbase import PluginBase
+
 
 class Plugin(PluginBase):
     # plugin specific
@@ -73,7 +73,7 @@ class Plugin(PluginBase):
                 options_to_add[key] = val
 
         if len(options_to_add) < 2:
-            await Globals.disco.send_message(message.channel, 'A poll with less than 2 options doesn\'t make much sense.')
+            await message.channel.send('A poll with less than 2 options doesn\'t make much sense.')
             return
 
         lowest_available_poll_id = 0
@@ -102,12 +102,12 @@ class Plugin(PluginBase):
 
                 poll.time = dt
                 if dt - datetime.now() >= timedelta(days=1) and Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
-                    await Globals.disco.send_message(message.channel, 'The poll time is quite long, would you like me to pin it?')
+                    await message.channel.send('The poll time is quite long, would you like me to pin it?')
                     answer = await Globals.disco.wait_for_message(timeout=20, author=message.author, check=lambda m: m.content.lower() in ('y', 'yes', 'n', 'no', 'pin', 'don\'t pin', 'nah', 'yep', 'sure', 'ok', 'nope'))
                     if answer.content in ('y', 'yes', 'pin', 'yep', 'sure', 'ok'):
                         poll.pin = True
             else:
-                await Globals.disco.send_message(message.channel, 'Sorry, I couldn\'t understand the time :/')
+                await message.channel.send('Sorry, I couldn\'t understand the time :/')
 
         await poll.create_card(message)
         self.polls[message.server][message.channel].append(poll)
@@ -130,14 +130,14 @@ class Plugin(PluginBase):
                         ended_poll = True
                         break
         except IndexError as e:
-            await Globals.disco.send_message(message.channel, 'No polls to end')
+            await message.channel.send('No polls to end')
             return
         except ValueError as e:
-            await Globals.disco.send_message(message.channel, 'Invalid poll ID')
+            await message.channel.send('Invalid poll ID')
             return
 
         if not ended_poll:
-            await Globals.disco.send_message(message.channel, 'No active polls to end')
+            await message.channel.send('No active polls to end')
 
     class Poll:
 
@@ -180,7 +180,7 @@ class Plugin(PluginBase):
             for num, option in self.options.items():
                 embed.add_field(name=f'{num}. {option["option"]}', value='No votes', inline=False)
             embed.set_footer(text='Vote by adding reaction corresponding your choice. :one: :two: :three: ...')
-            self.card = await Globals.disco.send_message(message.channel, embed=embed)
+            self.card = await message.channel.send(embed=embed)
             if self.pin:
                 await Globals.disco.pin_message(self.card)
             if self.time:

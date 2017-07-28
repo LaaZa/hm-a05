@@ -1,4 +1,5 @@
 import sys
+
 import discord
 
 from modules.globals import Globals
@@ -19,10 +20,13 @@ class Disco(discord.Client):
             Globals.log.info('Opus codec loaded')
         super().__init__()
 
-    async def login(self):
+    def run(self, *args, **kwargs):
+        super().run(self.__token)
+
+    async def login(self, token, *, bot=True):
         try:
             Globals.log.info(f'Logging in')
-            await super().login(self.__token)
+            await super().login(self.__token, bot=bot)
         except (discord.LoginFailure, discord.HTTPException, TypeError) as e:
             Globals.log.error(f'Login failed: {e}')
 
@@ -35,8 +39,8 @@ class Disco(discord.Client):
         sys.exit()
 
     async def say(self, channel, content):
-        await self.send_typing(channel)
-        await self.send_message(channel, content)
+        await channel.typing()
+        await channel.send(content)
 
     class DataMessage:
 
