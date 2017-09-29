@@ -21,14 +21,14 @@ class Plugin(PluginBase):
         msg = self.Command(message)
         #try:
         if len(msg.parts) > 1:
-            await Globals.disco.send_typing(message.channel)
-            req = await self.api.request(' '.join(msg.parts[1:]))
-            if req:
-                answer = await self.api.all(3)
-                if answer:
-                    await message.channel.send('\n'.join(answer))
-                else:
-                    await message.channel.send('No one knows!')
+            async with message.channel.typing():
+                req = await self.api.request(' '.join(msg.parts[1:]))
+                if req:
+                    answer = await self.api.all(3)
+                    if answer:
+                        await message.channel.send('\n'.join(answer))
+                    else:
+                        await message.channel.send('No one knows!')
         else:
             await message.channel.send('I found exactly what you were looking for: NOTHING!')
         return True

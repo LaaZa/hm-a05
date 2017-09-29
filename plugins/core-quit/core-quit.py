@@ -15,9 +15,9 @@ class Plugin(PluginBase):
 
     async def on_message(self, message, trigger):
             try:
-                if Globals.permissions.has_permission(message.author, Globals.permissions.PermissionLevel.admin):
+                if Globals.permissions.is_admin(message.author):
                     await message.channel.send('Do I really have to go?')
-                    msg = await Globals.disco.wait_for_message(timeout=5, author=message.author, channel=message.channel, check=lambda m: 'yes' in m.content.lower() or 'no' in m.content.lower())
+                    msg = await Globals.disco.wait_for(timeout=5, check=lambda m: m.author is message.author and m.channel is message.channel and 'yes' in m.content.lower() or 'no' in m.content.lower())
                     if msg:
                         if msg.content.lower() == 'yes':
                             await message.channel.send('Sayonara!')

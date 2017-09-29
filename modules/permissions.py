@@ -1,9 +1,11 @@
-from enum import IntEnum
-from modules.sqlite import SQLite
-from modules.globals import Globals
-import sqlite3
 import secrets
+import sqlite3
+from enum import IntEnum
+
 import discord
+
+from modules.globals import Globals
+from modules.sqlite import SQLite
 
 
 class Permissions:
@@ -73,7 +75,7 @@ class Permissions:
         if channel:
             return member.permissions_in(channel).is_superset(permissions)
 
-        return member.server_permissions.is_subset(permissions)
+        return member.guild_permissions.is_subset(permissions)
 
     def client_has_discord_permissions(self, permissions_tuple: tuple, channel):
-        return self.has_discord_permissions(channel.server.me, permissions_tuple, channel=channel)
+        return self.has_discord_permissions(channel.guild.me, permissions_tuple, channel=channel)

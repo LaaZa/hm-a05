@@ -1,3 +1,5 @@
+import discord
+
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
 
@@ -14,10 +16,10 @@ class Plugin(PluginBase):
         self.help = 'Manage admin rights'
 
     async def on_message(self, message, trigger):
-        if message.channel.is_private:
+        if isinstance(message.channel, discord.DMChannel):
             try:
                 await message.channel.send('Please say the admin token')
-                msg = await Globals.disco.wait_for_message(timeout=10, channel=message.channel, author=message.author)
+                msg = await Globals.disco.wait_for('message', timeout=10, check=lambda x: x.channel is message.channel and x.author is message.author)
                 if Globals.permissions.validate_token(msg.content.strip()):
                     Globals.permissions.add_permission(message.author, Globals.permissions.PermissionLevel.admin)
                     await message.channel.send('You are now admin!')

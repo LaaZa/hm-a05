@@ -13,30 +13,30 @@ class Plugin(PluginBase):
         t = PluginBase.Trigger()
         t.add_event('on_message', 'join', True, self.on_message)
         self.trigger = t.functions
-        self.help = 'Join voice channels. vc:VoiceChannelName s:Server'
+        self.help = 'Join voice channels. vc:VoiceChannelName g:Guild'
 
     async def on_message(self, message, trigger):
         msg = PluginBase.Command(message)
 
-        keywords = msg.keyword_commands(('vc:', 's:'))
+        keywords = msg.keyword_commands(('vc:', 'g:'))
 
         vc = None
-        if message.server:
+        if message.guild:
             try:
-                vc = Globals.disco.voice_client_in(message.server)
+                vc = message.guild.voice_client
                 if vc:  # already on a channel
-                    if len(keywords) <= 0 and message.author.voice_channel:
-                        await vc.move_to(discord.utils.get(message.server.channels, id=message.author.voice_channel.id, type=discord.ChannelType.voice))
+                    if len(keywords) <= 0 and message.author.voice.channel:
+                        await vc.move_to(discord.utils.get(message.guild.channels, id=message.author.voice.channel.id))
                     else:
-                        await vc.move_to(discord.utils.get(message.server.channels, name=keywords['vc:'], type=discord.ChannelType.voice))
+                        await vc.move_to(discord.utils.get(message.guild.channels, name=keywords['vc:']))
                 else:  # join channel if not joined on any
-                    if len(keywords) <= 0 and message.author.voice_channel:
-                        await Globals.disco.join_voice_channel(discord.utils.get(message.server.channels, id=message.author.voice_channel.id, type=discord.ChannelType.voice))
+                    if len(keywords) <= 0 and message.author.voice.channel:
+                        await discord.utils.get(message.guild.channels, id=message.author.voice.channel.id).connect()
                     else:
-                        await Globals.disco.join_voice_channel(discord.utils.get(message.server.channels, name=keywords['vc:'], type=discord.ChannelType.voice))
-                if discord.Permissions(manage_messages=True) >= message.server.get_member(Globals.disco.user.id).permissions_in(message.channel):
+                        await discord.utils.get(message.guild.channels, name=keywords['vc:']).connect()
+                if Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
                     Globals.log.error('Deleting message')
-                    await Globals.disco.delete_message(message)
+                    await message.delete()
                 return True
             except Exception as e:
                 Globals.log.error(f'Could not join channel: {str(e)}')
@@ -44,16 +44,16 @@ class Plugin(PluginBase):
                 return False
         else:
             try:
-                for server in Globals.disco.servers:
-                    if server.name == keywords['s:']:
-                        vc = Globals.disco.voice_client_in(server)
+                for guild in Globals.disco.guilds:
+                    if guild.name == keywords['g:']:
+                        vc = guild.voice_client
                         if vc:  # already on a channel
-                            await vc.move_to(discord.utils.get(server.channels, name=keywords['vc:'], type=discord.ChannelType.voice))
+                            await vc.move_to(discord.utils.get(guild.channels, name=keywords['vc:']))
                         else:  # join channel if not joined on any
-                            await Globals.disco.join_voice_channel(discord.utils.get(server.channels, name=keywords['vc:'], type=discord.ChannelType.voice))
-                if discord.Permissions(manage_messages=True) <= message.server.get_member(Globals.disco.user.id).permissions_in(message.channel):
+                            await discord.utils.get(guild.channels, name=keywords['vc:']).connect()
+                if Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
                     Globals.log.error('Deleting message')
-                    await Globals.disco.delete_message(message)
+                    await message.delete()
                 return True
             except Exception as e:
                 Globals.log.error(f'Could not join channel: {str(e)}')

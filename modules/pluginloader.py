@@ -1,14 +1,14 @@
-import os
-import sys
-import re
-import json
-import traceback
-from collections import OrderedDict, defaultdict, deque
-import importlib as imp
+import collections
 import importlib.machinery
 import importlib.util
+import json
+import os
+import re
+import sys
+import traceback
+from collections import OrderedDict, defaultdict, deque
 
-import collections
+import discord
 
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
@@ -104,7 +104,7 @@ class PluginLoader:
                 return False
         except Exception as err:
             Globals.log.error('Unhandled Exception from plugin: %s : %s' % (plugin.name, traceback.format_exc()))
-            await Globals.disco.send_file(channel, fp=sys.path[0] + '/static/miharu_chibi_everything_small_crop_gradient.png', content=f'gets hit by unhandled **{type(err).__name__}** thrown from {plugin.name} plugin')
+            await channel.send(file=discord.File(sys.path[0] + '/static/miharu_chibi_everything_small_crop_gradient.png'), content=f'gets hit by unhandled **{type(err).__name__}** thrown from {plugin.name} plugin')
             return False
 
     def load_plugins(self, load='*'):

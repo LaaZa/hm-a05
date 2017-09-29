@@ -7,8 +7,6 @@ from datetime import timedelta
 from random import shuffle
 
 import aiohttp
-import discord
-import youtube_dl
 
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
@@ -69,40 +67,43 @@ class Plugin(PluginBase):
 
     async def on_message(self, message, trigger):
         msg = self.Command(message)
-        await self.set_voice_client(message.server)
-        if Globals.disco.is_voice_connected(message.server):
-            if message.author.voice_channel == Globals.disco.voice_client_in(message.server).channel:
-                if msg.word(0, default='playing'):
-                    subcmd = msg.word(0, default='playing')
-                    if subcmd == 'permissions':
-                        await self.sub_permissions(message)
-                    else:
-                        if self._has_permission(message, subcmd):
-                            await self.subcommands.get(subcmd.lower(), lambda x: True)(message)
+        if message.guild:
+            await self.set_voice_client(message.guild)
+            if message.guild.voice_client:
+                if message.author.voice.channel == message.guild.voice_client.channel:
+                    if msg.word(0, default='playing'):
+                        subcmd = msg.word(0, default='playing')
+                        if subcmd == 'permissions':
+                            await self.sub_permissions(message)
                         else:
-                            await message.channel.send(f'{message.author.mention} you have no permission to use that command')
-                    return True
+                            if self._has_permission(message, subcmd):
+                                await self.subcommands.get(subcmd.lower(), lambda x: True)(message)
+                            else:
+                                await message.channel.send(f'{message.author.mention} you have no permission to use that command')
+                        return True
+                else:
+                    return False
             else:
-                return False
+                await message.channel.send('I\'m not on a voice channel')
         else:
-            await message.channel.send('I\'m not on a voice channel')
+            await message.channel.send('I can\'t play music here')
 
     '''
     UTILITY FUNCTIONS
     '''
 
-    def get_audio_state(self, server):
-        state = self.audio_states.get(server.id)
+    def get_audio_state(self, guild):
+        state = self.audio_states.get(guild.id)
         if state is None:
             state = AudioState(self.client, on_status_change=self.update_status, queue_next=self.add_next_from_queue)
-            self.audio_states[server.id] = state
+            self.audio_states[guild.id] = state
             Globals.log.debug('New audio state')
         return state
 
-    async def set_voice_client(self, server):
-        if Globals.disco.is_voice_connected(server):
-            voice = Globals.disco.voice_client_in(server)
-            state = self.get_audio_state(server)
+    async def set_voice_client(self, guild):
+        if guild and guild.voice_client:
+            voice = guild.voice_client
+            state = self.get_audio_state(guild)
             state.voice = voice
 
     def _unload(self):
@@ -126,8 +127,8 @@ class Plugin(PluginBase):
                 command = pair[0]
 
         for role in message.author.roles:
-            if self.role_permissions.get(message.server.id) and self.role_permissions.get(message.server.id).get(role.id):
-                for cmds in self.role_permissions.get(message.server.id).get(role.id):
+            if self.role_permissions.get(message.guild.id) and self.role_permissions.get(message.guild.id).get(role.id):
+                for cmds in self.role_permissions.get(message.guild.id).get(role.id):
                     if command in cmds:
                         return True
 
@@ -170,7 +171,7 @@ class Plugin(PluginBase):
             roles_str = kwrds.get('roles').lower().split('@')
             roles_str = ['@' + x.strip().lstrip('\u200b') if x.strip().startswith('\u200b') else x.strip() for x in roles_str]
             roles = []
-            for role in message.server.roles:
+            for role in message.guild.roles:
                 if role.name.lower() in roles_str:
                     roles.append(role)
 
@@ -197,11 +198,11 @@ class Plugin(PluginBase):
             final_list = add_list - remove_list
 
             for role in roles:
-                if self.role_permissions.get(message.server.id) and self.role_permissions.get(message.server.id).get(role.id):
-                    self.role_permissions[message.server.id][role.id].update(final_list)
-                    self.role_permissions[message.server.id][role.id].difference_update(remove_list)
+                if self.role_permissions.get(message.guild.id) and self.role_permissions.get(message.guild.id).get(role.id):
+                    self.role_permissions[message.guild.id][role.id].update(final_list)
+                    self.role_permissions[message.guild.id][role.id].difference_update(remove_list)
                 else:
-                    self.role_permissions[message.server.id][role.id] = final_list
+                    self.role_permissions[message.guild.id][role.id] = final_list
             Globals.log.debug(self.role_permissions)
             await message.channel.send('Changed permissions')
 
@@ -209,14 +210,14 @@ class Plugin(PluginBase):
             await message.channel.send('You need to specify roles: @role and commands: add pause -stop')
 
     async def sub_shuffle(self, message):
-        if len(self.playlist_to_add.get(message.server, deque())) <= 1:
+        if len(self.playlist_to_add.get(message.guild, deque())) <= 1:
             await message.channel.send('The playlist doesn\'t have enough items to shuffle')
             return
-        shuffle(self.playlist_to_add.get(message.server, deque()))
+        shuffle(self.playlist_to_add.get(message.guild, deque()))
         await message.channel.send('シャッフル！ The playlist ain\'t what it used to be')
 
     async def sub_volume(self, message):
-        state = self.get_audio_state(message.server)
+        state = self.get_audio_state(message.guild)
         if state.current is None:
             await message.channel.send(f'I\'m not playing music')
             return
@@ -247,7 +248,7 @@ class Plugin(PluginBase):
             await message.channel.send(f'Volume is now {state.player.volume * 100}%')
 
     async def sub_playing(self, message):
-        state = self.get_audio_state(message.server)
+        state = self.get_audio_state(message.guild)
         if state.current is None or not state.is_playing():
             await message.channel.send(f'Not playing anything right now')
         else:
@@ -277,7 +278,7 @@ class Plugin(PluginBase):
             if state.player.thumbnail:
                 embed.set_thumbnail(url=state.player.thumbnail)
             embed.set_footer(text=service)
-            self.last_info_card[message.server] = await message.channel.send(embed=embed)
+            self.last_info_card[message.guild] = await message.channel.send(embed=embed)
 
     async def sub_add(self, message):
         msg = self.Command(message)
@@ -298,14 +299,14 @@ class Plugin(PluginBase):
                 else:
                     await message.channel.send(f'Added {"next " if media_info.get("next") else ""}**{media_info.get("title")}** to playlist')
                 if Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
-                    await Globals.disco.delete_message(message)
+                    await message.delete()
         else:
             await message.channel.send('I need proper url :/')
 
     async def sub_play(self, message):
-        state = self.get_audio_state(message.server)
+        state = self.get_audio_state(message.guild)
         if state.current:
-            await self.resume(message)
+            await self.play(message)
         else:
             if state.deck.empty() and not state.is_playing():
                 await message.channel.send('The playlist is empty :<')
@@ -317,133 +318,126 @@ class Plugin(PluginBase):
         await self.pause(message)
 
     async def add_to_queue(self, message, url):
-        state = self.get_audio_state(message.server)
-        await self.set_voice_client(message.server)
+        state = self.get_audio_state(message.guild)
+        await self.set_voice_client(message.guild)
 
-        Globals.disco.send_typing(message.server)
-        info_out = None
+        async with message.channel.typing():
+            info_out = None
 
-        msg = self.Command(message)
+            msg = self.Command(message)
 
-        ytdl_options = {
-            'quiet': False,
-            'flat-playlist': True,
-            'ignore-errors': False,
-            'skip_download': True,
-            'extract_flat': 'in_playlist',
-            'logger': Globals.log,
-            'default_search': 'auto',
-        }
-
-        ydl = youtube_dl.YoutubeDL(ytdl_options)
-
-        info = None
-
-        #  load media information/playlist
-        try:
-            func = functools.partial(ydl.extract_info, url, download=False)
-            info = await Globals.disco.loop.run_in_executor(None, func)
-        except youtube_dl.DownloadError as e:
-            Globals.log.error(f'Could not add items from the playlist {str(e)}')
-            await message.channel.send('Could not add items from the playlist :<')
-            return None
-        if info.get('_type') == 'playlist' and len(info.get('entries')) > 1:
-            info_out = info
-            await message.channel.send('Adding items from the playlist')
-
-            #  generated playlists do not have title, we will use search query instead without part before :
-            if not info.get('title'):
-                info['title'] = url.split(':')[-1]
-
-            if msg.word(0).lower() in ('addnext', 'an'):
-                await self.put_to_deck(message, info.get('entries'))
-                info_out['next'] = True
-            else:
-                for entry in info.get('entries'):
-                    self.playlist_to_add[message.server].append(entry)
-                    Globals.log.info(f'Added entry for url {entry.get("url") or entry.get("webpage_url")}')
-        else:
             ytdl_options = {
                 'quiet': False,
-                'noplaylist': True,
+                'flat-playlist': True,
                 'ignore-errors': False,
                 'skip_download': True,
+                'extract_flat': 'in_playlist',
                 'logger': Globals.log,
                 'default_search': 'auto',
             }
-            #  load more detailed information for singular entries
+
             ydl = youtube_dl.YoutubeDL(ytdl_options)
 
-            entry_info = None
+            info = None
 
-            #  load media information
+            #  load media information/playlist
             try:
                 func = functools.partial(ydl.extract_info, url, download=False)
-                entry_info = await Globals.disco.loop.run_in_executor(None, func)
+                info = await Globals.disco.loop.run_in_executor(None, func)
             except youtube_dl.DownloadError as e:
                 Globals.log.error(f'Could not add items from the playlist {str(e)}')
-                await message.channel.send('Could not add the item :<')
+                await message.channel.send('Could not add items from the playlist :<')
                 return None
-            #  search results can be playlists with only one entry
-            if entry_info.get('entries') and len(entry_info.get('entries')) == 1:
-                entry_info = entry_info['entries'][0]
+            if info.get('_type') == 'playlist' and len(info.get('entries')) > 1:
+                info_out = info
+                await message.channel.send('Adding items from the playlist')
 
-            info_out = entry_info
-            if msg.word(0).lower() in ('addnext', 'an'):
-                await self.put_to_deck(message, [entry_info])
-                info_out['next'] = True
+                #  generated playlists do not have title, we will use search query instead without part before :
+                if not info.get('title'):
+                    info['title'] = url.split(':')[-1]
+
+                if msg.word(0).lower() in ('addnext', 'an'):
+                    await self.put_to_deck(message, info.get('entries'))
+                    info_out['next'] = True
+                else:
+                    for entry in info.get('entries'):
+                        self.playlist_to_add[message.guild].append(entry)
+                        Globals.log.info(f'Added entry for url {entry.get("url") or entry.get("webpage_url")}')
             else:
-                self.playlist_to_add[message.server].append(entry_info)
-                Globals.log.info(f'Added entry for url {entry_info.get("url") or entry_info.get("webpage_url")}')
+                ytdl_options = {
+                    'quiet': False,
+                    'noplaylist': True,
+                    'ignore-errors': False,
+                    'skip_download': True,
+                    'logger': Globals.log,
+                    'default_search': 'auto',
+                }
+                #  load more detailed information for singular entries
+                ydl = youtube_dl.YoutubeDL(ytdl_options)
 
-        #  immediately put on deck if it is empty
-        if state.deck.empty():
-            await self.add_next_from_queue(message)
-        return info_out
+                entry_info = None
+
+                #  load media information
+                try:
+                    func = functools.partial(ydl.extract_info, url, download=False)
+                    entry_info = await Globals.disco.loop.run_in_executor(None, func)
+                except youtube_dl.DownloadError as e:
+                    Globals.log.error(f'Could not add items from the playlist {str(e)}')
+                    await message.channel.send('Could not add the item :<')
+                    return None
+                #  search results can be playlists with only one entry
+                if entry_info.get('entries') and len(entry_info.get('entries')) == 1:
+                    entry_info = entry_info['entries'][0]
+
+                info_out = entry_info
+                if msg.word(0).lower() in ('addnext', 'an'):
+                    await self.put_to_deck(message, [entry_info])
+                    info_out['next'] = True
+                else:
+                    self.playlist_to_add[message.guild].append(entry_info)
+                    Globals.log.info(f'Added entry for url {entry_info.get("url") or entry_info.get("webpage_url")}')
+
+            #  immediately put on deck if it is empty
+            if state.deck.empty():
+                await self.add_next_from_queue(message)
+            return info_out
 
     async def add_next_from_queue(self, message):
-        if len(self.playlist_to_add[message.server]) > 0:
-            await self.add_player(message, self.playlist_to_add[message.server].popleft())
+        if len(self.playlist_to_add[message.guild]) > 0:
+            await self.add_player(message, self.playlist_to_add[message.guild].popleft())
 
     async def put_to_deck(self, message, entry_info_list):
-        state = self.get_audio_state(message.server)
+        state = self.get_audio_state(message.guild)
 
         #  get entry from the deck if exists and put it back on the playlist
         if not state.deck.empty():
             entry = await state.deck.get()
-            self.playlist_to_add[message.server].appendleft(entry.info)
+            self.playlist_to_add[message.guild].appendleft(entry.info)
             Globals.log.info(f'Added back to playlist from deck entry for url {entry.info.get("url") or entry.info.get("webpage_url")}')
         #  add the entry or entries to the playlist next
         for entry_info in reversed(entry_info_list):
-            self.playlist_to_add[message.server].appendleft(entry_info)
+            self.playlist_to_add[message.guild].appendleft(entry_info)
             Globals.log.info(f'Added entry for url to the front of playlist {entry_info.get("url") or entry_info.get("webpage_url")}')
         #  and put it on the deck immediately
         await self.add_next_from_queue(message)
 
     async def add_player(self, message, entry_info):
-        if Globals.disco.is_voice_connected(message.server):
-            state = self.get_audio_state(message.server)
+        if message.guild.voice_client:
+            state = self.get_audio_state(message.guild)
 
             Globals.log.info(f'Adding player for url {entry_info.get("url") or entry_info.get("webpage_url")}')
 
-            ytdl_options = {
-                'quiet': True,
-                'noplaylist': True,
-                'retries': 20,
-                'fixup': 'detect_or_warn',
-                'continuedl': True,
-                'logger': Globals.log,
-            }
             try:
-                player = await state.voice.create_ytdl_player(entry_info.get("webpage_url") or entry_info.get("url"), ytdl_options=ytdl_options, after=state.toggle_next, options='-bufsize 4096k')
+                source = await YTDLSource.from_url(entry_info.get("url") or entry_info.get("webpage_url"), loop=Globals.disco.loop)
+                player = AudioPlayer(voice=state.voice, source=source, client=Globals.disco, info=entry_info, after=state.toggle_next)
             except Exception as e:
                 Globals.log.error('Player adding failed:' + str(e))
                 await self.add_next_from_queue(message)
+                return None
             else:
-                player.volume = self.volume
                 if not entry_info.get('thumbnail'):
                     #  load some extra meta
-                    func = functools.partial(player.yt.extract_info,  entry_info.get("webpage_url") or entry_info.get("url"), download=False)
+                    func = functools.partial(player.source.ytdl.extract_info,  entry_info.get("webpage_url") or entry_info.get("url"), download=False)
                     info = await Globals.disco.loop.run_in_executor(None, func)
 
                     stream_info = await self.get_stream_info(entry_info.get('url'))
@@ -474,27 +468,34 @@ class Plugin(PluginBase):
             return None
 
     async def pause(self, message):
-        state = self.get_audio_state(message.server)
+        state = self.get_audio_state(message.guild)
         if state.is_playing():
             state.player.pause()
             await self.update_status(message, AudioStatus.PAUSED)
             Globals.log.debug('Musicplayer: pause')
 
+    async def play(self, message):
+        state = self.get_audio_state(message.guild)
+        state.player.play()
+        await self.update_status(message.channel, AudioStatus.PLAYING)
+        Globals.log.debug('Musicplayer play')
+
     async def resume(self, message):
-        state = self.get_audio_state(message.server)
+        state = self.get_audio_state(message.guild)
         state.player.resume()
         await self.update_status(message.channel, AudioStatus.PLAYING)
         Globals.log.debug('Musicplayer resume')
 
     async def next(self, message):
-        player = self.get_audio_state(message.server)
-        player.player.stop()
+        state = self.get_audio_state(message.guild)
+        state.player.stop()
+        state.player.next()
         Globals.log.error('Musicplayer Next')
 
     async def update_status(self, channel, status):
         return
         '''
-        current_song = self.get_audio_state(channel.server).player
+        current_song = self.get_audio_state(channel.guild).player
         if status is AudioStatus.PLAYING:
             game = discord.Game(name=f'[▶]{current_song.title}', type=int(current_song.is_live))
         elif status is AudioStatus.PAUSED:

@@ -1,8 +1,11 @@
-from enum import Enum
-from modules.globals import Globals
-from operator import itemgetter
-import re
 import asyncio
+import re
+from enum import Enum
+from operator import itemgetter
+
+import discord
+
+from modules.globals import Globals
 
 
 class PluginBase:
@@ -34,6 +37,8 @@ class PluginBase:
                 self.cmd = self.parts[0].lstrip(self.cmd_prefix)
             else:
                 self.cmd = ''
+
+            self.__message = message
 
         def word(self, position, excludecmd=True, default=''):
             words = self.message_content.split()
@@ -97,6 +102,15 @@ class PluginBase:
                         keyword_values.update({indx[i - 1][0]: self.message_content[indx[i - 1][1] + len(indx[i - 1][0]):indx[i][1]].strip(':')})
             Globals.log.debug(f'keyword_values: {keyword_values}')
             return keyword_values
+
+        def is_private(self):
+            return isinstance(self.__message, discord.DMChannel)
+
+        def is_voice(self):
+            return isinstance(self.__message, discord.VoiceChannel)
+
+        def is_group_channel(self):
+            return isinstance(self.__message, discord.GroupChannel)
 
     type = None
     name = None

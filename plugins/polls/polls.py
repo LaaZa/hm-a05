@@ -33,8 +33,9 @@ class Plugin(PluginBase):
     async def on_message(self, message, trigger):
         try:
             msg = self.Command(message)
-            if msg.word(0):
-                await self.subcommands.get(msg.word(0), self.dummy)(message)
+            if message.guild:
+                if msg.word(0):
+                    await self.subcommands.get(msg.word(0), self.dummy)(message)
 
             return True
         except Exception as e:
@@ -47,17 +48,17 @@ class Plugin(PluginBase):
     def reaction_check(self, reaction, user, **kwargs):
         if reaction.emoji in self.number_emoji.values():
             msg = reaction.message
-            if msg.author == msg.server.me:
-                if self.polls.get(msg.server) and self.polls.get(msg.server).get(msg.channel):
-                    for poll in self.polls[msg.server][msg.channel]:
+            if msg.author == msg.guild.me:
+                if self.polls.get(msg.guild) and self.polls.get(msg.guild).get(msg.channel):
+                    for poll in self.polls[msg.guild][msg.channel]:
                         if not poll.ended:
                             return True
         return False
 
     async def on_reaction_add(self, reaction, user, **kwargs):
         msg = reaction.message
-        if self.polls.get(msg.server) and self.polls.get(msg.server).get(msg.channel):
-            for poll in self.polls[msg.server][msg.channel]:
+        if self.polls.get(msg.guild) and self.polls.get(msg.guild).get(msg.channel):
+            for poll in self.polls[msg.guild][msg.channel]:
                 if poll.card.id == msg.id and not poll.ended:
                     for k, v in self.number_emoji.items():
                         if v == reaction.emoji:
@@ -80,8 +81,8 @@ class Plugin(PluginBase):
 
         poll_ids = set()
 
-        if self.polls.get(message.server) and self.polls.get(message.server).get(message.channel):
-            for poll in self.polls.get(message.server).get(message.channel):
+        if self.polls.get(message.guild) and self.polls.get(message.guild).get(message.channel):
+            for poll in self.polls.get(message.guild).get(message.channel):
                 if not poll.ended:
                     poll_ids.add(poll.poll_id)
 
@@ -103,30 +104,30 @@ class Plugin(PluginBase):
                 poll.time = dt
                 if dt - datetime.now() >= timedelta(days=1) and Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
                     await message.channel.send('The poll time is quite long, would you like me to pin it?')
-                    answer = await Globals.disco.wait_for_message(timeout=20, author=message.author, check=lambda m: m.content.lower() in ('y', 'yes', 'n', 'no', 'pin', 'don\'t pin', 'nah', 'yep', 'sure', 'ok', 'nope'))
+                    answer = await Globals.disco.wait_for_message(timeout=20, check=lambda m: m.author is message.author and m.content.lower() in ('y', 'yes', 'n', 'no', 'pin', 'don\'t pin', 'nah', 'yep', 'sure', 'ok', 'nope'))
                     if answer.content in ('y', 'yes', 'pin', 'yep', 'sure', 'ok'):
                         poll.pin = True
             else:
                 await message.channel.send('Sorry, I couldn\'t understand the time :/')
 
         await poll.create_card(message)
-        self.polls[message.server][message.channel].append(poll)
+        self.polls[message.guild][message.channel].append(poll)
 
     async def sub_end(self, message):
         msg = self.Command(message)
         ended_poll = False
         try:
-            for poll in list(self.polls[message.server][message.channel]):
+            for poll in list(self.polls[message.guild][message.channel]):
                 if (poll.added_by == message.author or (Globals.permissions.is_admin(message.author) or Globals.permissions.has_discord_permissions(message.author, ('manage_messages',), message.channel))) and not poll.ended:
                     if msg.word(1):
                         if poll.poll_id == int(msg.word(1)):
                             await poll.end_poll()
-                            self.polls[message.server][message.channel].remove(poll)
+                            self.polls[message.guild][message.channel].remove(poll)
                             ended_poll = True
                             break
                     elif not msg.word(1):
                         await poll.end_poll()
-                        self.polls[message.server][message.channel].remove(poll)
+                        self.polls[message.guild][message.channel].remove(poll)
                         ended_poll = True
                         break
         except IndexError as e:
@@ -166,7 +167,7 @@ class Plugin(PluginBase):
                 if self.votes.get(member):
                     self.options.get(str(self.votes[member]))['votes'] -= 1
                     self.options.get(str(num))['votes'] += 1
-                    await Globals.disco.remove_reaction(self.card, self.number_emoji[self.votes[member]], member)
+                    await self.card.remove_reaction(self.number_emoji[self.votes[member]], member)
                 else:
                     self.options.get(str(num))['votes'] += 1
                     self.total_votes += 1
@@ -182,7 +183,7 @@ class Plugin(PluginBase):
             embed.set_footer(text='Vote by adding reaction corresponding your choice. :one: :two: :three: ...')
             self.card = await message.channel.send(embed=embed)
             if self.pin:
-                await Globals.disco.pin_message(self.card)
+                await self.card.pin()
             if self.time:
                 self.time_task = Globals.disco.loop.call_at(Globals.disco.loop.time() + (self.time.timestamp() - datetime.now().timestamp()), self._time)
 
@@ -199,7 +200,7 @@ class Plugin(PluginBase):
                 embed.add_field(name=f'{num}. {option["option"]}', value=f'{val} {percentage}%', inline=False)
 
             embed.set_footer(text='Vote by adding reaction corresponding your choice. :one: :two: :three: ...')
-            self.card = await Globals.disco.edit_message(self.card, embed=embed)
+            await self.card.edit(embed=embed)
 
         async def end_poll(self):
             self.ended = True
@@ -215,9 +216,9 @@ class Plugin(PluginBase):
 
                 embed.add_field(name=f'{num}. {option["option"]}', value=f'{val} {percentage}%', inline=False)
             embed.set_footer(text='VOTE HAS ENDED')
-            self.card = await Globals.disco.edit_message(self.card, embed=embed)
+            await self.card.edit(embed=embed)
             if self.pin:
-                await Globals.disco.unpin_message(self.card)
+                await self.card.unpin()
 
         def _time(self):
             asyncio.ensure_future(self.end_poll(), loop=Globals.disco.loop)

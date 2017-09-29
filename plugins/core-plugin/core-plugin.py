@@ -43,7 +43,7 @@ class Plugin(PluginBase):
         await message.channel.send(f"Available commands: {', '.join(commands)}")
 
     async def load(self, message, trigger):
-        if not Globals.permissions.has_permission(message.author, Globals.permissions.PermissionLevel.admin):
+        if not Globals.permissions.is_admin(message.author):
             await message.channel.send('You need admin rights for this command')
             return
         msg = self.Command(message)
@@ -63,7 +63,7 @@ class Plugin(PluginBase):
             await message.channel.send('You must state the name of the plugin')
 
     async def unload(self, message, trigger):
-        if not Globals.permissions.has_permission(message.author, Globals.permissions.PermissionLevel.admin):
+        if not Globals.permissions.is_admin(message.author):
             await message.channel.send('You need admin rights for this command')
             return
         msg = self.Command(message)
@@ -79,7 +79,7 @@ class Plugin(PluginBase):
             await message.channel.send('You must state the name of the plugin')
 
     async def reload(self, message, trigger):
-        if not Globals.permissions.has_permission(message.author, Globals.permissions.PermissionLevel.admin):
+        if not Globals.permissions.is_admin(message.author):
             await message.channel.send('You need admin rights for this command')
             return
         msg = self.Command(message)

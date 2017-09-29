@@ -83,7 +83,7 @@ class Plugin(PluginBase):
                         options.append(str(i + 1) + '. ' + opt)
                     opts = '\n'.join(options)
                     await message.channel.send(f'Try to be more specific. I found these though:\n{self.markdown(opts)}\nType any number above to get that article')
-                    retry = await Globals.disco.wait_for_message(timeout=10, channel=message.channel, author=message.author)
+                    retry = await Globals.disco.wait_for(timeout=10, check=lambda m: m.channel is message.channel and m.author is message.author)
                     try:
                         best_match = search[int(retry.content) - 1]
                     except (ValueError, IndexError):

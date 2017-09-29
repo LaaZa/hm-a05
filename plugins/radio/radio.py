@@ -92,14 +92,14 @@ class Plugin(PluginBase):
             embed = discord.Embed(title='R/a/dio', colour=self.radio.dj_color)
             embed.add_field(name='New DJ', value=self.radio.dj)
             embed.set_thumbnail(url=self.radio.dj_image)
-            await Globals.disco.purge_from(message.channel, limit=20, check=self.__purge_check_dj)
+            await message.channel.purge(limit=20, check=self.__purge_check_dj)
             await message.channel.send(embed=embed)
             self.last_dj = self.radio.dj
         elif querytype == 'np' and self.last_np != self.radio.np:
             embed = discord.Embed(title='R/a/dio')
             embed.add_field(name='Now playing', value=self.radio.np)
             embed.set_thumbnail(url='https://r-a-d.io/assets/logo_image_small.png')
-            await Globals.disco.purge_from(message.channel, limit=20, check=self.__purge_check_np)
+            await message.channel.purge(limit=20, check=self.__purge_check_np)
             await message.channel.send(embed=embed)
             self.last_np = self.radio.np
 

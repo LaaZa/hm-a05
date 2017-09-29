@@ -15,10 +15,10 @@ class Plugin(PluginBase):
 
     async def on_message(self, message, trigger):
         msg = PluginBase.Command(message)
-        if message.server:
+        if message.guild:
             try:
                 if Globals.permissions.has_permission(message.author, Globals.permissions.PermissionLevel.admin):
-                    await Globals.disco.change_nickname(message.server.get_member(Globals.disco.user.id), ' '.join(msg.parts[1:]).strip())
+                    await Globals.disco.change_nickname(message.guild.get_member(Globals.disco.user.id), ' '.join(msg.parts[1:]).strip())
                 else:
                     await message.channel.send('You have no permissions for this :<')
                 return True
