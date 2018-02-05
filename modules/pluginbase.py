@@ -117,7 +117,8 @@ class PluginBase:
     trigger = None
     help = None
 
-    def markdown(self, content):
+    @classmethod
+    def markdown(cls, content):
         start = '```markdown\n'
         end = '\n```'
         return start + str(content) + end
@@ -166,3 +167,65 @@ class PluginBase:
                 return True
             else:
                 return False
+
+    class InteractiveMessage:
+
+        messages = {}
+
+        def __init__(self):
+            self.message = None
+            self.functions = {}
+            self.toggles = []
+
+            @Globals.disco.event
+            async def on_reaction_add(reaction, user):
+                if reaction.message.id in self.__class__.messages and not user.bot:
+                    func = self.__class__.messages[reaction.message.id].functions.get(str(reaction))
+                    await reaction.message.remove_reaction(str(reaction), user)
+                    try:
+                        await func[0](*func[1], **func[2])
+                    except TypeError:
+                        pass
+
+                    for toggle in self.__class__.messages[reaction.message.id].toggles:
+                        if toggle[toggle[0]][3] == str(reaction):
+                            await reaction.message.clear_reactions()
+                            await toggle[toggle[0]][0](*toggle[toggle[0]][1], **toggle[toggle[0]][2])
+                            toggle[0] = 1 if toggle[0] == 2 else 2
+                            await self.__add_reactions()
+
+        async def send(self, channel, *args, **kwargs):
+            self.message = await channel.send(*args, **kwargs)
+            self.__class__.messages[self.message.id] = self
+            await self.__add_reactions()
+
+        async def edit(self, **kwargs):
+            await self.message.edit(**kwargs)
+
+        async def add_button(self, emoji, func, *args, **kwargs):
+            self.functions[emoji] = (func, args, kwargs)
+            if self.message:
+                await self.__add_reactions()
+
+        async def remove_button(self, emoji):
+            try:
+                self.functions.pop(emoji)
+            except KeyError:
+                pass
+            self.__add_reactions()
+
+        async def add_toggle(self, emoji_on, emoji_off, func_on, func_off, args_on: tuple, args_off: tuple, kwargs_on: dict, kwargs_off: dict):
+            on = (func_on, args_on, kwargs_on, emoji_on)
+            off = (func_off, args_off, kwargs_off, emoji_off)
+            self.toggles.append([1, on, off])
+            if self.message:
+                await self.__add_reactions()
+
+        async def __add_reactions(self):
+            for emoji in self.functions.keys():
+                if emoji not in (str(em) for em in self.message.reactions):
+                    await self.message.add_reaction(emoji=emoji)
+
+            for toggle in self.toggles:
+                if toggle[toggle[0]][3] not in (str(em) for em in self.message.reactions):
+                    await self.message.add_reaction(emoji=toggle[toggle[0]][3])
