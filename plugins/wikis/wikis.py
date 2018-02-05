@@ -1,3 +1,4 @@
+import asyncio
 import re
 from difflib import SequenceMatcher as SM
 
@@ -33,21 +34,51 @@ class Plugin(PluginBase):
             else:
                 wiki = wikipedia.random()[0]
 
-            text = f'**{wiki.title}**| {wiki.url}\n{wikipedia.summary(wiki.title, 2)}'
-            if len(text) > 400:
-                text = f'**{wiki.title}**| {wiki.url}\n{wikipedia.summary(wiki.title, 1)}'
-            if len(text) > 400:
-                text = f'**{wiki.title}**| {wiki.url}\n{wikipedia.summary(wiki.title, 1)[:-3]}...'
-
-            await message.channel.send(self.markdown(text))
-            return True
-
         except wikipedia.exceptions.DisambiguationError as e:
-            await message.channel.send(f'Try to be more specific. I found these though:\n{" | ".join(e.options)}')
-            return True
+            best_match = ''
+            search = e.options
+            options = list()
+            for i, opt in enumerate(search):
+                options.append(str(i + 1) + '. ' + opt)
+            opts = '\n'.join(options)
+            await message.channel.send(f'Try to be more specific. I found these though:\n{self.markdown(opts)}\nType any number above to get that article', delete_after=10)
+            try:
+                retry = await Globals.disco.wait_for(event='message', timeout=10, check=lambda m: m.channel is message.channel and m.author is message.author)
+                best_match = search[int(retry.content) - 1]
+                try:
+                    await retry.delete()
+                except (discord.Forbidden, discord.HTTPException):
+                    pass
+            except (ValueError, IndexError):
+                return True
+            except AttributeError:
+                await message.channel.send('...well maybe it just doesn\'t exist, you suck at searching or I suck at finding... or maybe we just need more bananas.')
+                return True
+            except asyncio.TimeoutError:
+                pass
+
+            wiki = wikipedia.page(best_match)
         except wikipedia.exceptions.PageError:
             await message.channel.send('I didn\'t find anything on the Wikipedia about that. :<')
             return True
+
+        text = f'{wikipedia.summary(wiki.title, 2)}'
+        if len(text) > 400:
+            text = f'{wikipedia.summary(wiki.title, 1)}'
+        if len(text) > 400:
+            text = f'{wikipedia.summary(wiki.title, 1)[:-3]}...'
+
+        embed = discord.Embed(title=wiki.title, url=wiki.url.replace(' ', '_'), description='```' + text + '```', colour=discord.Colour.dark_blue())
+
+        await message.channel.send(embed=embed)
+
+        try:
+            await message.delete()
+        except (discord.Forbidden, discord.HTTPException):
+            pass
+
+        return True
+
         #except Exception as e:
          #   Globals.log.error(f'Could not search wikipedia: {str(e)}')
           #  return False
@@ -82,15 +113,21 @@ class Plugin(PluginBase):
                     for i, opt in enumerate(search):
                         options.append(str(i + 1) + '. ' + opt)
                     opts = '\n'.join(options)
-                    await message.channel.send(f'Try to be more specific. I found these though:\n{self.markdown(opts)}\nType any number above to get that article')
-                    retry = await Globals.disco.wait_for(timeout=10, check=lambda m: m.channel is message.channel and m.author is message.author)
+                    await message.channel.send(f'Try to be more specific. I found these though:\n{self.markdown(opts)}\nType any number above to get that article', delete_after=10)
                     try:
+                        retry = await Globals.disco.wait_for(event='message', timeout=10, check=lambda m: m.channel is message.channel and m.author is message.author)
                         best_match = search[int(retry.content) - 1]
+                        try:
+                            await retry.delete()
+                        except (discord.Forbidden, discord.HTTPException):
+                            pass
                     except (ValueError, IndexError):
                         return True
                     except AttributeError:
                         await message.channel.send('...well maybe it just doesn\'t exist, you suck at searching or I suck at finding... or maybe we just need more bananas.')
                         return True
+                    except asyncio.TimeoutError:
+                        pass
 
                 wiki = wikia.page(subwikia, best_match)
             else:
@@ -125,22 +162,33 @@ class Plugin(PluginBase):
             text = wiki.content[:2000]
             if not text:
                 text = wikia.summary(subwikia, wiki.title)
-            sentences = re.findall(r'^.+\.', text, flags=re.M)
-            if not sentences:
-                sentences = [text,]
-            embed = discord.Embed(title=wiki.title, url=wiki.url.replace(' ', '_'), description='```' + '``````'.join(sentences) + '```', colour=discord.Colour.teal())
+            paragraph = re.findall(r'^.+\.', text, flags=re.M)
+            if not paragraph:
+                paragraph = [text, ]
+            embed_long = discord.Embed(title=wiki.title, url=wiki.url.replace(' ', '_'), description='```' + '``````'.join(paragraph) + '```', colour=discord.Colour.teal())
+            embed_short = discord.Embed(title=wiki.title, url=wiki.url.replace(' ', '_'), description='```' + paragraph[0] + '```', colour=discord.Colour.teal())
             if image:
-                embed.set_image(url=image)
-            embed.set_footer(text=re.search(r'(?:/)((?:[a-z0-9|-]+\.)*[a-z0-9|-]+\.[a-z]+)(?:/)', wiki.url).group(1))
-            await message.channel.send(embed=embed)
-            return True
+                embed_long.set_image(url=image)
+            embed_long.set_footer(text=re.search(r'(?:/)((?:[a-z0-9|-]+\.)*[a-z0-9|-]+\.[a-z]+)(?:/)', wiki.url).group(1))
+            embed_short.set_footer(text=re.search(r'(?:/)((?:[a-z0-9|-]+\.)*[a-z0-9|-]+\.[a-z]+)(?:/)', wiki.url).group(1))
+
+            if Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
+                imsg = PluginBase.InteractiveMessage()
+                await imsg.add_toggle('➕', '➖', imsg.edit, imsg.edit, tuple(), tuple(), {'embed': embed_long}, {'embed': embed_short})
+                await imsg.send(message.channel, embed=embed_short)
+            else:
+                await message.channel.send(message.channel, embed=embed_long)
 
         except wikia.PageError:
             await message.channel.send('I didn\'t find anything on the Wikia about that. :<')
-            return True
         except ValueError:
             await message.channel.send('I didn\'t find anything on the Wikia about that. :<')
-            return True
         except wikia.WikiaError:
             await message.channel.send('I didn\'t find anything :<')
-            return True
+
+        try:
+            await message.delete()
+        except (discord.Forbidden, discord.HTTPException):
+            pass
+
+        return True
