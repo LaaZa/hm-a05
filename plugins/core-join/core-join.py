@@ -18,7 +18,7 @@ class Plugin(PluginBase):
     async def on_message(self, message, trigger):
         msg = PluginBase.Command(message)
 
-        keywords = msg.keyword_commands(('vc:', 'g:'))
+        keywords = msg.keyword_commands(('vc', 'g'))
 
         vc = None
         if message.guild:
@@ -28,12 +28,12 @@ class Plugin(PluginBase):
                     if len(keywords) <= 0 and message.author.voice.channel:
                         await vc.move_to(discord.utils.get(message.guild.channels, id=message.author.voice.channel.id))
                     else:
-                        await vc.move_to(discord.utils.get(message.guild.channels, name=keywords['vc:']))
+                        await vc.move_to(discord.utils.get(message.guild.channels, name=keywords['vc']))
                 else:  # join channel if not joined on any
                     if len(keywords) <= 0 and message.author.voice.channel:
                         await discord.utils.get(message.guild.channels, id=message.author.voice.channel.id).connect()
                     else:
-                        await discord.utils.get(message.guild.channels, name=keywords['vc:']).connect()
+                        await discord.utils.get(message.guild.channels, name=keywords['vc']).connect()
                 if Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
                     Globals.log.error('Deleting message')
                     await message.delete()
@@ -45,12 +45,12 @@ class Plugin(PluginBase):
         else:
             try:
                 for guild in Globals.disco.guilds:
-                    if guild.name == keywords['g:']:
+                    if guild.name == keywords['g']:
                         vc = guild.voice_client
                         if vc:  # already on a channel
-                            await vc.move_to(discord.utils.get(guild.channels, name=keywords['vc:']))
+                            await vc.move_to(discord.utils.get(guild.channels, name=keywords['vc']))
                         else:  # join channel if not joined on any
-                            await discord.utils.get(guild.channels, name=keywords['vc:']).connect()
+                            await discord.utils.get(guild.channels, name=keywords['vc']).connect()
                 if Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
                     Globals.log.error('Deleting message')
                     await message.delete()
