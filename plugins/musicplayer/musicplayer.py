@@ -68,23 +68,23 @@ class Plugin(PluginBase):
     async def on_message(self, message, trigger):
         msg = self.Command(message)
         if message.guild:
-            await self.set_voice_client(message.guild)
-            if message.guild.voice_client:
-                if message.author.voice.channel == message.guild.voice_client.channel:
-                    if msg.word(0, default='playing'):
-                        subcmd = msg.word(0, default='playing')
-                        if subcmd == 'permissions':
-                            await self.sub_permissions(message)
-                        else:
+            subcmd = msg.word(0, default='playing')
+            if subcmd == 'permissions':
+                await self.sub_permissions(message)
+            else:
+                await self.set_voice_client(message.guild)
+                if message.guild.voice_client:
+                    if message.author.voice.channel == message.guild.voice_client.channel:
+                        if msg.word(0, default='playing'):
                             if self._has_permission(message, subcmd):
                                 await self.subcommands.get(subcmd.lower(), lambda x: True)(message)
                             else:
                                 await message.channel.send(f'{message.author.mention} you have no permission to use that command')
                         return True
+                    else:
+                        return False
                 else:
-                    return False
-            else:
-                await message.channel.send('I\'m not on a voice channel')
+                    await message.channel.send('I\'m not on a voice channel')
         else:
             await message.channel.send('I can\'t play music here')
 
