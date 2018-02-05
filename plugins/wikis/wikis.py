@@ -154,10 +154,14 @@ class Plugin(PluginBase):
                         soup = BeautifulSoup(html, 'html.parser')
                         try:
                             image = soup.select_one('[class*="infobox"] img').attrs['src']
+                            if not image.startswith('http'):
+                                raise AttributeError
                         except AttributeError:
                             image = soup.find('meta', attrs={'property': 'og:image'}).attrs['content']
             except AttributeError:
                 pass
+
+            Globals.log.debug(f'Image url: {image}')
 
             text = wiki.content[:2000]
             if not text:
