@@ -166,7 +166,7 @@ class Plugin(PluginBase):
             await message.channel.send('You have no rights to manage permissions')
             return
         msg = self.Command(message, clean=True)
-        kwrds = msg.keyword_commands(('roles', 'commands'))
+        kwrds = msg.keyword_commands(('roles', 'commands'), strip=True)
         if kwrds.get('roles') and kwrds.get('commands'):
             roles_str = kwrds.get('roles').lower().split('@')
             roles_str = ['@' + x.strip().lstrip('\u200b') if x.strip().startswith('\u200b') else x.strip() for x in roles_str]

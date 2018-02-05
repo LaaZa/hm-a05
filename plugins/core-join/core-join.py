@@ -18,7 +18,7 @@ class Plugin(PluginBase):
     async def on_message(self, message, trigger):
         msg = PluginBase.Command(message)
 
-        keywords = msg.keyword_commands(('vc', 'g'))
+        keywords = msg.keyword_commands(('vc', 'g'), strip=True)
 
         vc = None
         if message.guild:
