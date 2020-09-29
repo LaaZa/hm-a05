@@ -1,5 +1,3 @@
-import discord
-
 class Globals:
     config_data = None
     log = None

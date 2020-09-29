@@ -62,7 +62,7 @@ class Permissions:
     def init_table(self):
         try:
             # If requested table doesn't exist, we create it
-            self.db.get_cursor().execute('CREATE TABLE IF NOT EXISTS permissions (id INTEGER PRIMARY KEY, user_id TEXT, permission_level INTEGER)')
+            self.db.get_cursor().execute('CREATE TABLE IF NOT EXISTS permissions (id INTEGER PRIMARY KEY, user_id TEXT UNIQUE, permission_level INTEGER)')
         except sqlite3.Error as err:
             Globals.log.error(f'Table creation failed: {str(err)}')
 

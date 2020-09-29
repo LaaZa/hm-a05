@@ -18,6 +18,8 @@ class Disco(discord.Client):
                 Globals.log.info('Opus codec loaded')
         else:
             Globals.log.info('Opus codec loaded')
+
+        discord.Intents.all()
         super().__init__()
 
     def run(self, *args, **kwargs):

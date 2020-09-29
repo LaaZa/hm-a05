@@ -1,4 +1,8 @@
 .idea/
+venv/
+env/
+*.db
+*.dll
 *.pyc
 setup.cfg
 *.sublime-project

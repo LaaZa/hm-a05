@@ -212,7 +212,7 @@ class PluginBase:
                 self.functions.pop(emoji)
             except KeyError:
                 pass
-            self.__add_reactions()
+            await self.__add_reactions()
 
         async def add_toggle(self, emoji_on, emoji_off, func_on, func_off, args_on: tuple, args_off: tuple, kwargs_on: dict, kwargs_off: dict):
             on = (func_on, args_on, kwargs_on, emoji_on)
@@ -229,3 +229,4 @@ class PluginBase:
             for toggle in self.toggles:
                 if toggle[toggle[0]][3] not in (str(em) for em in self.message.reactions):
                     await self.message.add_reaction(emoji=toggle[toggle[0]][3])
+
