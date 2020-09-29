@@ -35,9 +35,11 @@ class Plugin(PluginBase):
             match = re.search(regex, message.content)
             if match:
                 try:
-                    await message.channel.send(answer.format(*match.groups()))
+                    await message.channel.send(answer.format(*[x if x else '' for x in match.groups()]))
                     return True
                 except IndexError:
                     await message.channel.send(answer)
                     return True
+                except KeyError:
+                    return False
         return False
