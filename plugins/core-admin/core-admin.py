@@ -1,4 +1,4 @@
-import discord
+import nextcord
 
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
@@ -16,10 +16,10 @@ class Plugin(PluginBase):
         self.help = 'Manage admin rights'
 
     async def on_message(self, message, trigger):
-        if isinstance(message.channel, discord.DMChannel):
+        if isinstance(message.channel, nextcord.DMChannel):
             try:
                 await message.channel.send('Please say the admin token')
-                msg = await Globals.disco.wait_for('message', timeout=10, check=lambda x: x.channel is message.channel and x.author is message.author)
+                msg = await Globals.disco.wait_for('message', timeout=10, check=lambda x: x.channel == message.channel and x.author == message.author)
                 if Globals.permissions.validate_token(msg.content.strip()):
                     Globals.permissions.add_permission(message.author, Globals.permissions.PermissionLevel.admin)
                     await message.channel.send('You are now admin!')

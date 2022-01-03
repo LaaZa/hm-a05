@@ -1,17 +1,17 @@
 import sys
 
-import discord
+import nextcord
 
 from modules.globals import Globals
 
 
-class Disco(discord.Client):
+class Disco(nextcord.Client):
 
     def __init__(self, token):
         self.__token = token
-        if not discord.opus.is_loaded():
+        if not nextcord.opus.is_loaded():
             try:
-                discord.opus.load_opus('opus')
+                nextcord.opus.load_opus('opus')
             except OSError as e:
                 Globals.log.info(f'Opus codec could not be loaded: {str(e)}')
             else:
@@ -19,22 +19,22 @@ class Disco(discord.Client):
         else:
             Globals.log.info('Opus codec loaded')
 
-        discord.Intents.all()
+        nextcord.Intents.all()
         super().__init__()
 
     def run(self, *args, **kwargs):
         super().run(self.__token)
 
-    async def login(self, token, *, bot=True):
+    async def login(self, token):
         try:
             Globals.log.info(f'Logging in')
-            await super().login(self.__token, bot=bot)
-        except (discord.LoginFailure, discord.HTTPException, TypeError) as e:
+            await super().login(self.__token)
+        except (nextcord.LoginFailure, nextcord.HTTPException, TypeError) as e:
             Globals.log.error(f'Login failed: {e}')
 
     async def logout(self):
         Globals.log.info(f'Logging out')
-        await super().logout()
+        await super().close()
 
     def quit(self):
         Globals.log.info(f'Quitting')

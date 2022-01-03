@@ -9,6 +9,9 @@ class Events:
         @Globals.disco.event
         async def on_message(message):
             # Commands
+            if message.author == Globals.disco.user:
+                return
+
             if message.author.id != Globals.disco.user.id and not message.author.bot:
                 await Globals.pluginloader.generate_plugin_queue('on_message', is_command=True, message=message)
                 status = True

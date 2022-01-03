@@ -3,7 +3,7 @@ import re
 from enum import Enum
 from operator import itemgetter
 
-import discord
+import nextcord
 
 from modules.globals import Globals
 
@@ -104,13 +104,13 @@ class PluginBase:
             return keyword_values
 
         def is_private(self):
-            return isinstance(self.__message, discord.DMChannel)
+            return isinstance(self.__message, nextcord.DMChannel)
 
         def is_voice(self):
-            return isinstance(self.__message, discord.VoiceChannel)
+            return isinstance(self.__message, nextcord.VoiceChannel)
 
         def is_group_channel(self):
-            return isinstance(self.__message, discord.GroupChannel)
+            return isinstance(self.__message, nextcord.GroupChannel)
 
     type = None
     name = None

@@ -8,7 +8,7 @@ import sys
 import traceback
 from collections import OrderedDict, defaultdict, deque
 
-import discord
+import nextcord
 
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
@@ -67,7 +67,7 @@ class PluginLoader:
                         for hooked in self.hooks.get(fname, ''):
                             self.plugin_queue.append((self.plugins.get(hooked), fname))
                             Globals.log.debug('Hook plugin added')
-                elif not is_command and isinstance(trigger, collections.Callable) and trigger(**kwargs):
+                elif not is_command and isinstance(trigger, collections.abc.Callable) and trigger(**kwargs):
                     self.plugin_queue.append((plugin, event, trigger, fn))
                     if fname in self.hooks.keys():
                         for hooked in self.hooks.get(fname, ''):
@@ -104,7 +104,7 @@ class PluginLoader:
                 return False
         except Exception as err:
             Globals.log.error('Unhandled Exception from plugin: %s : %s' % (plugin.name, traceback.format_exc()))
-            await channel.send(file=discord.File(sys.path[0] + '/static/miharu_chibi_everything_small_crop_gradient.png'), content=f'gets hit by unhandled **{type(err).__name__}** thrown from {plugin.name} plugin')
+            await channel.send(file=nextcord.File(sys.path[0] + '/static/miharu_chibi_everything_small_crop_gradient.png'), content=f'gets hit by unhandled **{type(err).__name__}** thrown from {plugin.name} plugin')
             return False
 
     def load_plugins(self, load='*'):
