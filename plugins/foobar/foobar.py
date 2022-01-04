@@ -1,6 +1,6 @@
 import sys
 
-import discord
+import nextcord
 
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
@@ -31,7 +31,7 @@ class Plugin(PluginBase):
             return False
         expression = self.expressions.get(msg.parts[1], '')
         if expression:
-            await Globals.disco.send(message.channel, discord.File(sys.path[0] + '/static/' + expression))
+            await Globals.disco.send(message.channel, nextcord.File(sys.path[0] + '/static/' + expression))
             return True
         else:
             return False

@@ -271,7 +271,7 @@ class Plugin(PluginBase):
                 upload_date: ('Upload Date', True),
                 added_by.mention: ('Added by', False)
             }
-            embed = discord.Embed()
+            embed = nextcord.Embed()
             for part, text in info.items():
                 if part:
                     embed.add_field(name=text[0], value=part, inline=text[1])
@@ -497,9 +497,9 @@ class Plugin(PluginBase):
         '''
         current_song = self.get_audio_state(channel.guild).player
         if status is AudioStatus.PLAYING:
-            game = discord.Game(name=f'[▶]{current_song.title}', type=int(current_song.is_live))
+            game = nextcord.Game(name=f'[▶]{current_song.title}', type=int(current_song.is_live))
         elif status is AudioStatus.PAUSED:
-            game = discord.Game(name=f'[⏸]{current_song.title}', type=int(current_song.is_live))
+            game = nextcord.Game(name=f'[⏸]{current_song.title}', type=int(current_song.is_live))
         else:
             game = None
 

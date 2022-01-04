@@ -1,4 +1,4 @@
-import discord
+import nextcord
 
 from modules.pluginbase import PluginBase
 
@@ -15,7 +15,7 @@ class Plugin(PluginBase):
         self.help = 'Bot starts a DM'
 
     async def on_message(self, message, trigger):
-        if not isinstance(message.channel, discord.DMChannel):
+        if not isinstance(message.channel, nextcord.DMChannel):
             try:
                 await message.author.send('Hello!')
                 return True

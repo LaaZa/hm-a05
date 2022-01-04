@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 import dateparser
-import discord
+import nextcord
 
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
@@ -104,7 +104,7 @@ class Plugin(PluginBase):
                 poll.time = dt
                 if dt - datetime.now() >= timedelta(days=1) and Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
                     await message.channel.send('The poll time is quite long, would you like me to pin it?')
-                    answer = await Globals.disco.wait_for_message(timeout=20, check=lambda m: m.author is message.author and m.content.lower() in ('y', 'yes', 'n', 'no', 'pin', 'don\'t pin', 'nah', 'yep', 'sure', 'ok', 'nope'))
+                    answer = await Globals.disco.wait_for_message(timeout=20, check=lambda m: m.author == message.author and m.content.lower() in ('y', 'yes', 'n', 'no', 'pin', 'don\'t pin', 'nah', 'yep', 'sure', 'ok', 'nope'))
                     if answer.content in ('y', 'yes', 'pin', 'yep', 'sure', 'ok'):
                         poll.pin = True
             else:
@@ -177,7 +177,7 @@ class Plugin(PluginBase):
                 pass
 
         async def create_card(self, message):
-            embed = discord.Embed(title=f'POLL #{self.poll_id} - {self.title}')
+            embed = nextcord.Embed(title=f'POLL #{self.poll_id} - {self.title}')
             for num, option in self.options.items():
                 embed.add_field(name=f'{num}. {option["option"]}', value='No votes', inline=False)
             embed.set_footer(text='Vote by adding reaction corresponding your choice. :one: :two: :three: ...')
@@ -190,7 +190,7 @@ class Plugin(PluginBase):
         async def update_card(self):
             if self.ended:
                 return
-            embed = discord.Embed(title=f'POLL #{self.poll_id} - {self.title}')
+            embed = nextcord.Embed(title=f'POLL #{self.poll_id} - {self.title}')
             for num, option in self.options.items():
                 try:
                     percentage = option['votes'] / self.total_votes * 100
@@ -206,7 +206,7 @@ class Plugin(PluginBase):
             self.ended = True
             if self.time_task:
                 self.time_task.cancel()
-            embed = discord.Embed(title=f'POLL #{self.poll_id} RESULTS - {self.title}')
+            embed = nextcord.Embed(title=f'POLL #{self.poll_id} RESULTS - {self.title}')
             for num, option in self.options.items():
                 try:
                     percentage = option['votes'] / self.total_votes * 100

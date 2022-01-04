@@ -2,7 +2,7 @@ import random
 import re
 from collections import defaultdict
 
-import discord
+import nextcord
 import feedparser
 
 from modules.globals import Globals
@@ -30,7 +30,7 @@ class Plugin(PluginBase):
             body = random.choice(d.entries)['content'][0]['value']
             image_link = re.findall(r'<span><a href="(.*?)">\[link\]</a>', body)[0]
 
-            embed = discord.Embed()
+            embed = nextcord.Embed()
             embed.set_image(url=image_link)
             embed.set_footer(text='Hmmm')
             await message.channel.send(embed=embed)

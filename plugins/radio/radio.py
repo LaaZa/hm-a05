@@ -1,6 +1,6 @@
 import time
 
-import discord
+import nextcord
 
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
@@ -32,7 +32,7 @@ class Plugin(PluginBase):
 
         if msg.word(0) == 'np' or not msg.word(0):
 
-            embed = discord.Embed(title='R/a/dio')
+            embed = nextcord.Embed(title='R/a/dio')
             embed.add_field(name='Now playing', value=self.radio.np)
             embed.set_thumbnail(url='https://r-a-d.io/assets/logo_image_small.png')
             await message.channel.send(embed=embed)
@@ -48,7 +48,7 @@ class Plugin(PluginBase):
                     await message.channel.send('Okay, I won\'t be notifying about song changes')
             return True
         elif msg.word(0) == 'dj':
-            embed = discord.Embed(title='R/a/dio', colour=self.radio.dj_color)
+            embed = nextcord.Embed(title='R/a/dio', colour=self.radio.dj_color)
             embed.add_field(name='Current DJ', value=self.radio.dj)
             embed.set_thumbnail(url=self.radio.dj_image)
             await message.channel.send(embed=embed)
@@ -64,13 +64,13 @@ class Plugin(PluginBase):
                     await message.channel.send('Okay, I won\'t be notifying about DJ changes')
             return True
         elif msg.word(0) == 'next':
-            embed = discord.Embed(title='Next On R/a/dio')
+            embed = nextcord.Embed(title='Next On R/a/dio')
             embed.add_field(name=self.radio.queue_track(0), value=f'in { self.radio.queue_time(0)}')
             embed.set_thumbnail(url='https://r-a-d.io/assets/logo_image_small.png')
             await message.channel.send(embed=embed)
             return True
         elif msg.word(0) == 'queue':
-            embed = discord.Embed(title='R/a/dio Coming Up')
+            embed = nextcord.Embed(title='R/a/dio Coming Up')
             for i, track in enumerate(self.radio.queue):
                 if self.radio.queue_is_request(i):
                     embed.add_field(name=self.radio.queue_track(i), value=f'in {self.radio.queue_time(i)}', inline=False)
@@ -89,14 +89,14 @@ class Plugin(PluginBase):
             self.last_update = time.time()
 
         if querytype == 'dj' and self.last_dj != self.radio.dj:
-            embed = discord.Embed(title='R/a/dio', colour=self.radio.dj_color)
+            embed = nextcord.Embed(title='R/a/dio', colour=self.radio.dj_color)
             embed.add_field(name='New DJ', value=self.radio.dj)
             embed.set_thumbnail(url=self.radio.dj_image)
             await message.channel.purge(limit=20, check=self.__purge_check_dj)
             await message.channel.send(embed=embed)
             self.last_dj = self.radio.dj
         elif querytype == 'np' and self.last_np != self.radio.np:
-            embed = discord.Embed(title='R/a/dio')
+            embed = nextcord.Embed(title='R/a/dio')
             embed.add_field(name='Now playing', value=self.radio.np)
             embed.set_thumbnail(url='https://r-a-d.io/assets/logo_image_small.png')
             await message.channel.purge(limit=20, check=self.__purge_check_np)

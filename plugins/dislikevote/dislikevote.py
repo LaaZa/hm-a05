@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-import discord
+import nextcord
 
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
@@ -60,7 +60,7 @@ class Plugin(PluginBase):
         try:
             await reaction.message.delete()
             return True
-        except (discord.Forbidden, discord.HTTPException) as e:
+        except (nextcord.Forbidden, nextcord.HTTPException) as e:
             Globals.log.error(f'No permission to delete messages: {str(e)}')
         return False
 

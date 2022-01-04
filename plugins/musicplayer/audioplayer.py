@@ -1,7 +1,7 @@
 import asyncio
 from enum import Enum
 
-import discord
+import nextcord
 import youtube_dl
 
 
@@ -139,7 +139,7 @@ class AudioPlayer:
         return self.info.get('is_live', '')
 
 
-class YTDLSource(discord.PCMVolumeTransformer):
+class YTDLSource(nextcord.PCMVolumeTransformer):
     ytdl_format_options = {
         'format': 'bestaudio/best',
         'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
@@ -176,4 +176,4 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         filename = cls.ytdl.prepare_filename(data)
 
-        return cls(discord.FFmpegPCMAudio(filename, before_options='-nostdin', options='-vn'), data=data)
+        return cls(nextcord.FFmpegPCMAudio(filename, before_options='-nostdin', options='-vn'), data=data)

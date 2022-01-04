@@ -3,7 +3,7 @@ import re
 from difflib import SequenceMatcher as SM
 
 import aiohttp
-import discord
+import nextcord
 import wikia
 import wikipedia
 from bs4 import BeautifulSoup
@@ -43,11 +43,11 @@ class Plugin(PluginBase):
             opts = '\n'.join(options)
             await message.channel.send(f'Try to be more specific. I found these though:\n{self.markdown(opts)}\nType any number above to get that article', delete_after=10)
             try:
-                retry = await Globals.disco.wait_for(event='message', timeout=10, check=lambda m: m.channel is message.channel and m.author is message.author)
+                retry = await Globals.disco.wait_for(event='message', timeout=10, check=lambda m: m.channel == message.channel and m.author == message.author)
                 best_match = search[int(retry.content) - 1]
                 try:
                     await retry.delete()
-                except (discord.Forbidden, discord.HTTPException):
+                except (nextcord.Forbidden, nextcord.HTTPException):
                     pass
             except (ValueError, IndexError):
                 return True
@@ -68,13 +68,13 @@ class Plugin(PluginBase):
         if len(text) > 400:
             text = f'{wikipedia.summary(wiki.title, 1)[:-3]}...'
 
-        embed = discord.Embed(title=wiki.title, url=wiki.url.replace(' ', '_'), description='```' + text + '```', colour=discord.Colour.dark_blue())
+        embed = nextcord.Embed(title=wiki.title, url=wiki.url.replace(' ', '_'), description='```' + text + '```', colour=nextcord.Colour.dark_blue())
 
         await message.channel.send(embed=embed)
 
         try:
             await message.delete()
-        except (discord.Forbidden, discord.HTTPException):
+        except (nextcord.Forbidden, nextcord.HTTPException):
             pass
 
         return True
@@ -115,11 +115,11 @@ class Plugin(PluginBase):
                     opts = '\n'.join(options)
                     await message.channel.send(f'Try to be more specific. I found these though:\n{self.markdown(opts)}\nType any number above to get that article', delete_after=10)
                     try:
-                        retry = await Globals.disco.wait_for(event='message', timeout=10, check=lambda m: m.channel is message.channel and m.author is message.author)
+                        retry = await Globals.disco.wait_for(event='message', timeout=10, check=lambda m: m.channel == message.channel and m.author == message.author)
                         best_match = search[int(retry.content) - 1]
                         try:
                             await retry.delete()
-                        except (discord.Forbidden, discord.HTTPException):
+                        except (nextcord.Forbidden, nextcord.HTTPException):
                             pass
                     except (ValueError, IndexError):
                         return True
@@ -169,8 +169,8 @@ class Plugin(PluginBase):
             paragraph = re.findall(r'^.+\.', text, flags=re.M)
             if not paragraph:
                 paragraph = [text, ]
-            embed_long = discord.Embed(title=wiki.title, url=wiki.url.replace(' ', '_'), description='```' + '``````'.join(paragraph) + '```', colour=discord.Colour.teal())
-            embed_short = discord.Embed(title=wiki.title, url=wiki.url.replace(' ', '_'), description='```' + paragraph[0] + '```', colour=discord.Colour.teal())
+            embed_long = nextcord.Embed(title=wiki.title, url=wiki.url.replace(' ', '_'), description='```' + '``````'.join(paragraph) + '```', colour=nextcord.Colour.teal())
+            embed_short = nextcord.Embed(title=wiki.title, url=wiki.url.replace(' ', '_'), description='```' + paragraph[0] + '```', colour=nextcord.Colour.teal())
             if image:
                 embed_long.set_image(url=image)
             embed_long.set_footer(text=re.search(r'(?:/)((?:[a-z0-9|-]+\.)*[a-z0-9|-]+\.[a-z]+)(?:/)', wiki.url).group(1))
@@ -192,7 +192,7 @@ class Plugin(PluginBase):
 
         try:
             await message.delete()
-        except (discord.Forbidden, discord.HTTPException):
+        except (nextcord.Forbidden, nextcord.HTTPException):
             pass
 
         return True

@@ -1,5 +1,5 @@
 import aiohttp
-import discord
+import nextcord
 
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
@@ -45,7 +45,7 @@ class Plugin(PluginBase):
             country = json[0]['country']
             pp_c_rank = json[0]['pp_country_rank']
 
-            embed = discord.Embed(title=f'Osu! - {username}')
+            embed = nextcord.Embed(title=f'Osu! - {username}')
             embed.add_field(name='Performance', value=f'{int(float(pp))}pp (#{pp_rank}) {self.flag(country)} #{pp_c_rank}')
             embed.add_field(name='Ranked Score', value=f'{ranked_score}')
             embed.add_field(name='Total Score', value=f'{total_score}')
