@@ -11,3 +11,5 @@ setup.cfg
 config.ini
 .storage
 load.order
+plugins/*
+!plugins/core-*
