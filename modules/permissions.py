@@ -66,7 +66,7 @@ class Permissions:
         except sqlite3.Error as err:
             Globals.log.error(f'Table creation failed: {str(err)}')
 
-    def has_nextcord_permissions(self, member, permissions_tuple: tuple, channel=None):
+    def has_discord_permissions(self, member, permissions_tuple: tuple, channel=None):
         permissions_dict = {}
         for permission in permissions_tuple:
             permissions_dict[permission] = True
@@ -77,9 +77,9 @@ class Permissions:
 
         return member.guild_permissions.is_subset(permissions)
 
-    def client_has_nextcord_permissions(self, permissions_tuple: tuple, channel):
+    def client_has_discord_permissions(self, permissions_tuple: tuple, channel):
         # try to get either Member object or ClientUser
         try:
-            return self.has_nextcord_permissions(channel.guild.me, permissions_tuple, channel=channel)
+            return self.has_discord_permissions(channel.guild.me, permissions_tuple, channel=channel)
         except AttributeError:
-            return self.has_nextcord_permissions(Globals.disco.user, permissions_tuple, channel=channel)
+            return self.has_discord_permissions(Globals.disco.user, permissions_tuple, channel=channel)
