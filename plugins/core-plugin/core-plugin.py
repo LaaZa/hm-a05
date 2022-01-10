@@ -28,6 +28,7 @@ class Plugin(PluginBase):
             await self.subcommands.get(msg.parts[1])(message, trigger)
             return True
         except Exception as e:
+            await message.channel.send(f"Available subcommands: {', '.join(self.subcommands.keys())}")
             Globals.log.error(f'No subcommand: {str(e)}')
             return False
 
@@ -95,26 +96,64 @@ class Plugin(PluginBase):
             await message.channel.send('You must state the name of the plugin')
 
     async def enable(self, message, trigger):
-        if not self.is_channel_admin(message.author, message.channel):
-            await message.channel.send('You need channel management rights for this command')
-            return
         msg = self.Command(message)
-        if msg.word(1):
-            plugin = Globals.pluginloader.enable(msg.words(1), message.channel)
-            if plugin == 1:
-                await message.channel.send(f'Enabled plugin: {msg.words(1)}')
-            elif plugin == 2:
-                await message.channel.send('Plugin already enabled')
+        if msg.word(1) in ('g', 'guild'):
+            if not self.is_guild_admin(message.author, message.guild):
+                await message.channel.send('You need guild management rights for this command')
+                return
+            if msg.word(2):
+                plugin = 0
+                for chan in message.guild.text_channels:
+                    plugin = Globals.pluginloader.enable(msg.words(2), chan)
+
+                if plugin == 1:
+                    await message.channel.send(f'Enabled plugin: {msg.words(1)}')
+                elif plugin == 2:
+                    await message.channel.send('Plugin already enabled')
+                else:
+                    await message.channel.send('No such plugin loaded')
             else:
-                await message.channel.send('No such plugin loaded')
+                await message.channel.send('You must state the name of the plugin')
         else:
-            await message.channel.send('You must state the name of the plugin')
+            if not self.is_channel_admin(message.author, message.channel):
+                await message.channel.send('You need channel management rights for this command')
+                return
+            if msg.word(1):
+                plugin = Globals.pluginloader.enable(msg.words(1), message.channel)
+                if plugin == 1:
+                    await message.channel.send(f'Enabled plugin: {msg.words(1)}')
+                elif plugin == 2:
+                    await message.channel.send('Plugin already enabled')
+                else:
+                    await message.channel.send('No such plugin loaded')
+            else:
+                await message.channel.send('You must state the name of the plugin')
 
     async def disable(self, message, trigger):
+        msg = self.Command(message)
+        if msg.word(1) in ('g', 'guild'):
+            if not self.is_guild_admin(message.author, message.guild):
+                await message.channel.send('You need guild management rights for this command')
+                return
+            if msg.word(2):
+                plugin = 0
+                for chan in message.guild.text_channels:
+                    plugin = Globals.pluginloader.disable(msg.words(2), chan)
+
+                if plugin == 1:
+                    await message.channel.send(f'Disabled plugin: {msg.words(2)}')
+                elif plugin == -1:
+                    await message.channel.send('Cannot disable a CORE type plugin')
+                elif plugin == 2:
+                    await message.channel.send('Plugin already disabled')
+                else:
+                    await message.channel.send('No such plugin loaded')
+            else:
+                await message.channel.send('You must state the name of the plugin')
+
         if not self.is_channel_admin(message.author, message.channel):
             await message.channel.send('You need channel management rights for this command')
             return
-        msg = self.Command(message)
         if msg.word(1):
             plugin = Globals.pluginloader.disable(msg.words(1), message.channel)
             if plugin == 1:
@@ -134,3 +173,10 @@ class Plugin(PluginBase):
             return True
         # channel management rights suffice as "channel admin"
         return Globals.permissions.has_discord_permissions(user, ('manage_channels',), channel=channel)
+
+    def is_guild_admin(self, user, guild):
+        #  global bot admin is above channel admin
+        if Globals.permissions.has_permission(user, Globals.permissions.PermissionLevel.admin):
+            return True
+        # channel management rights suffice as "channel admin"
+        return Globals.permissions.has_discord_permissions(user, ('administartor', 'manage_guild'), guild=guild)
