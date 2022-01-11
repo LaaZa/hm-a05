@@ -13,3 +13,4 @@ config.ini
 load.order
 plugins/*
 !plugins/core-*
+*.pickle
