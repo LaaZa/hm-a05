@@ -2,7 +2,7 @@ import sys
 
 import nextcord
 
-from modules.globals import Globals
+from modules.globals import Globals, SavedVar
 
 
 class Disco(nextcord.Client):
@@ -34,10 +34,12 @@ class Disco(nextcord.Client):
 
     async def logout(self):
         Globals.log.info(f'Logging out')
+        SavedVar.save()
         await super().close()
 
     def quit(self):
         Globals.log.info(f'Quitting')
+        SavedVar.save()
         sys.exit()
 
     async def say(self, channel, content):
