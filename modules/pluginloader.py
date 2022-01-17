@@ -33,7 +33,7 @@ class PluginLoader:
         self.write_load_order()
         self.order()
 
-    def get_plugin(self, attribute, value, types):
+    def get_plugin(self, attribute, value, types) -> PluginBase:
         for fname, plugin in ((x, y) for x, y in self.plugins.items() if y.type in types):
             attr = getattr(plugin, attribute)
             if attribute == 'trigger':
@@ -44,7 +44,7 @@ class PluginLoader:
                 if value == attr:
                     return plugin
 
-    async def generate_plugin_queue(self, event, is_command=False, **kwargs):
+    async def generate_plugin_queue(self, event: str, is_command: bool = False, **kwargs):
         self.purge_hooks()
         self.plugin_queue.clear()
         for plugin in self.plugins.values():
