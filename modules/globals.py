@@ -3,6 +3,7 @@ import inspect
 from os import path, pardir
 from varname.helpers import register
 
+
 class Globals:
     config_data = None
     log = None
@@ -15,11 +16,11 @@ class Globals:
     permissions = None
 
     @classmethod
-    def set_channel_command_prefix(cls, channel, prefix=default_command_prefix):
+    def set_channel_command_prefix(cls, channel, prefix: str=default_command_prefix) -> None:
         cls.__channel_command_prefix.update({channel: prefix})
 
     @classmethod
-    def channel_command_prefix(cls, channel):
+    def channel_command_prefix(cls, channel) -> str:
         return cls.__channel_command_prefix.get(channel, cls.default_command_prefix)
 
     @register
