@@ -1,5 +1,6 @@
 import asyncio
 import re
+from typing import Callable
 from enum import Enum
 from operator import itemgetter
 
@@ -19,7 +20,7 @@ class PluginBase:
         def __init__(self):
             self.functions = {}
 
-        def add_event(self, event, trigger, is_command, function):
+        def add_event(self, event: str, trigger, is_command: bool, function: Callable) -> None:
             triggers = self.functions.get(event, [])
             triggers.append((trigger, is_command, function))
             self.functions.update({event: triggers})
@@ -40,7 +41,7 @@ class PluginBase:
 
             self.__message = message
 
-        def word(self, position, excludecmd=True, default=''):
+        def word(self, position: int, excludecmd: bool = True, default: str = '') -> str:
             words = self.message_content.split()
             try:
                 if excludecmd and self.cmd:
@@ -52,7 +53,7 @@ class PluginBase:
             except (IndexError, ValueError):
                 return default
 
-        def wordlist(self, excludecmd=True, default=''):
+        def wordlist(self, excludecmd: bool = True, default: str = '') -> list[str]:
             words = self.message_content.split()
             try:
                 if excludecmd and self.message_content:
@@ -64,7 +65,7 @@ class PluginBase:
             except (IndexError, ValueError):
                 return [default]
 
-        def words(self, start=0, excludecmd=True, default=''):
+        def words(self, start: int = 0, excludecmd: bool = True, default: str = '') -> str:
             try:
                 if excludecmd and self.cmd:
                     text = self.message_content.partition(self.cmd)[2].strip()
@@ -81,7 +82,7 @@ class PluginBase:
             except (IndexError, ValueError):
                 return default
 
-        def keyword_commands(self, keywords=(), strip=False):
+        def keyword_commands(self, keywords: tuple[str] = (), strip: bool = False) -> dict[str, str]:
             indx = []
             keyword_values = {}
             for keyword in keywords:
@@ -103,13 +104,13 @@ class PluginBase:
             Globals.log.debug(f'keyword_values: {keyword_values}')
             return keyword_values
 
-        def is_private(self):
+        def is_private(self) -> bool:
             return isinstance(self.__message, nextcord.DMChannel)
 
-        def is_voice(self):
+        def is_voice(self) -> bool:
             return isinstance(self.__message, nextcord.VoiceChannel)
 
-        def is_group_channel(self):
+        def is_group_channel(self) -> bool:
             return isinstance(self.__message, nextcord.GroupChannel)
 
     type = None
@@ -118,7 +119,7 @@ class PluginBase:
     help = None
 
     @classmethod
-    def markdown(cls, content):
+    def markdown(cls, content: str):
         start = '```markdown\n'
         end = '\n```'
         return start + str(content) + end
@@ -129,8 +130,8 @@ class PluginBase:
 
         class IntervalTask:
 
-            def __init__(self, coro, interval, *args, **kwargs):
-                self.coro = coro
+            def __init__(self, coroutine, interval: float, *args, **kwargs):
+                self.coro = coroutine
                 self.interval = interval
                 self.args = args
                 self.kwargs = kwargs
@@ -138,12 +139,12 @@ class PluginBase:
 
                 self.task = Globals.disco.loop.create_task(self.run())
 
-            async def run(self):
+            async def run(self) -> None:
                 while self.running:
                     await self.coro(*self.args, **self.kwargs)
-                    await asyncio.sleep(self.interval, loop=Globals.disco.loop)
+                    await asyncio.sleep(self.interval)
 
-            def stop(self):
+            def stop(self) -> None:
                 self.running = False
                 self.task.cancel()
 
@@ -151,7 +152,7 @@ class PluginBase:
                 self.stop()
 
         @classmethod
-        def add_interval_task(cls, caller, task_id, interval, coroutine, *args, **kwargs):
+        def add_interval_task(cls, caller, task_id: str, interval: float, coroutine, *args, **kwargs) -> bool:
             if caller.__module__ + task_id in cls.interval_tasks.keys():
                 return False
             else:
@@ -160,7 +161,7 @@ class PluginBase:
                 return True
 
         @classmethod
-        def remove_interval_task(cls, caller, task_id):
+        def remove_interval_task(cls, caller, task_id) -> bool:
             if caller.__module__ + task_id in cls.interval_tasks.keys():
                 cls.interval_tasks.get(caller.__module__ + task_id).stop()
                 cls.interval_tasks.pop(caller.__module__ + task_id)
@@ -194,34 +195,34 @@ class PluginBase:
                             toggle[0] = 1 if toggle[0] == 2 else 2
                             await self.__add_reactions()
 
-        async def send(self, channel, *args, **kwargs):
+        async def send(self, channel, *args, **kwargs) -> None:
             self.message = await channel.send(*args, **kwargs)
             self.__class__.messages[self.message.id] = self
             await self.__add_reactions()
 
-        async def edit(self, **kwargs):
+        async def edit(self, **kwargs) -> None:
             await self.message.edit(**kwargs)
 
-        async def add_button(self, emoji, func, *args, **kwargs):
+        async def add_button(self, emoji, func, *args, **kwargs) -> None:
             self.functions[emoji] = (func, args, kwargs)
             if self.message:
                 await self.__add_reactions()
 
-        async def remove_button(self, emoji):
+        async def remove_button(self, emoji) -> None:
             try:
                 self.functions.pop(emoji)
             except KeyError:
                 pass
             await self.__add_reactions()
 
-        async def add_toggle(self, emoji_on, emoji_off, func_on, func_off, args_on: tuple, args_off: tuple, kwargs_on: dict, kwargs_off: dict):
+        async def add_toggle(self, emoji_on, emoji_off, func_on, func_off, args_on: tuple, args_off: tuple, kwargs_on: dict, kwargs_off: dict) -> None:
             on = (func_on, args_on, kwargs_on, emoji_on)
             off = (func_off, args_off, kwargs_off, emoji_off)
             self.toggles.append([1, on, off])
             if self.message:
                 await self.__add_reactions()
 
-        async def __add_reactions(self):
+        async def __add_reactions(self) -> None:
             for emoji in self.functions.keys():
                 if emoji not in (str(em) for em in self.message.reactions):
                     await self.message.add_reaction(emoji=emoji)
