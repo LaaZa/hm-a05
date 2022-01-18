@@ -14,23 +14,23 @@ class Plugin(PluginBase):
         self.help = 'Quit and end application'
 
     async def on_message(self, message, trigger):
-            try:
-                if Globals.permissions.is_admin(message.author):
-                    await message.channel.send('Do I really have to go?')
-                    msg = await Globals.disco.wait_for('message', timeout=5, check=lambda m: m.author == message.author and m.channel == message.channel and 'yes' in m.content.lower() or 'no' in m.content.lower())
-                    if msg:
-                        if msg.content.lower() == 'yes':
-                            await message.channel.send('Sayonara!')
-                            await Globals.disco.logout()
-                            await Globals.disco.close()
-                        else:
-                            await message.channel.send('Oh, good.')
+        try:
+            if Globals.permissions.is_admin(message.author):
+                await message.channel.send('Do I really have to go?')
+                msg = await Globals.disco.wait_for('message', timeout=5, check=lambda m: m.author == message.author and m.channel == message.channel and 'yes' in m.content.lower() or 'no' in m.content.lower())
+                if msg:
+                    if msg.content.lower() == 'yes':
+                        await message.channel.send('Sayonara!')
+                        await Globals.disco.logout()
+                        await Globals.disco.close()
                     else:
-                        await message.channel.send('Hmm? No? Oh, good.')
-                    return True
+                        await message.channel.send('Oh, good.')
                 else:
-                    await message.channel.send('You have no permissions for this :<')
+                    await message.channel.send('Hmm? No? Oh, good.')
                 return True
-            except Exception as e:
-                Globals.log.error(f'Could not quit: {str(e)}')
-                return False
+            else:
+                await message.channel.send('You have no permissions for this :<')
+            return True
+        except Exception as e:
+            Globals.log.error(f'Could not quit: {str(e)}')
+            return False
