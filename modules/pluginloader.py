@@ -7,6 +7,7 @@ import re
 import sys
 import traceback
 from collections import OrderedDict, defaultdict, deque
+from asyncio import Queue
 
 import nextcord
 
@@ -23,7 +24,7 @@ class PluginLoader:
     load_order = {'core': [], 'uncore': []}
     root = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.pardir), 'plugins/'))
     lofile = root + '/load.order'
-    plugin_queue = deque()
+    plugin_queue = Queue() #deque()
 
     def __init__(self):
         Globals.pluginloader = self
@@ -46,7 +47,8 @@ class PluginLoader:
 
     async def generate_plugin_queue(self, event: str, is_command: bool = False, **kwargs):
         self.purge_hooks()
-        self.plugin_queue.clear()
+        #self.plugin_queue.clear()
+        self.plugin_queue = Queue()
         for plugin in self.plugins.values():
             fname = self.plugin_to_fname(plugin)
             triggers = plugin.trigger.get(event, [])
@@ -56,31 +58,37 @@ class PluginLoader:
                 if not is_command and not cmd and isinstance(trigger, type(re.compile(''))):  # use regex
                     match = re.search(trigger, kwargs['message'].content)
                     if match:
-                        self.plugin_queue.append((plugin, event, match, fn))
+                        #self.plugin_queue.append((plugin, event, match, fn))
+                        await self.plugin_queue.put((plugin, event, match, fn))
                         if fname in self.hooks.keys():
                             for hooked in self.hooks.get(fname, ''):
-                                self.plugin_queue.append((self.plugins.get(hooked), fname))
+                                #self.plugin_queue.append((self.plugins.get(hooked), fname))
+                                await self.plugin_queue.put((self.plugins.get(hooked), fname))
                                 Globals.log.debug('Hook plugin added')
                 elif is_command and isinstance(trigger, str) and trigger.lower() == PluginBase.Command(kwargs['message']).cmd.lower():
-                    self.plugin_queue.append((plugin, event, trigger, fn))
+                    #self.plugin_queue.append((plugin, event, trigger, fn))
+                    await self.plugin_queue.put((plugin, event, trigger, fn))
                     if fname in self.hooks.keys():
                         for hooked in self.hooks.get(fname, ''):
-                            self.plugin_queue.append((self.plugins.get(hooked), fname))
+                            #self.plugin_queue.append((self.plugins.get(hooked), fname))
+                            await self.plugin_queue.put((self.plugins.get(hooked), fname))
                             Globals.log.debug('Hook plugin added')
                 elif not is_command and isinstance(trigger, collections.abc.Callable) and trigger(**kwargs):
-                    self.plugin_queue.append((plugin, event, trigger, fn))
+                    #self.plugin_queue.append((plugin, event, trigger, fn))
+                    await self.plugin_queue.put((plugin, event, trigger, fn))
                     if fname in self.hooks.keys():
                         for hooked in self.hooks.get(fname, ''):
-                            self.plugin_queue.append((self.plugins.get(hooked), fname))
+                            #self.plugin_queue.append((self.plugins.get(hooked), fname))
+                            await self.plugin_queue.put((self.plugins.get(hooked), fname))
                             Globals.log.debug('Hook plugin added')
-        if len(self.plugin_queue) > 0:
-            Globals.log.debug('Generated new plugin queue with %s plugins' % len(self.plugin_queue))
+        if self.plugin_queue.qsize() > 0:
+            Globals.log.debug(f'Generated new plugin queue with {self.plugin_queue.qsize()} plugins')
             return True
 
     async def execute_plugin_queue(self, channel,  **kwargs):
-        if len(self.plugin_queue) <= 0:
+        if self.plugin_queue.empty():
             return -1
-        plugin, event, trigger, fn = self.plugin_queue.popleft()
+        plugin, event, trigger, fn = self.plugin_queue.get_nowait()
         kwargs['trigger'] = trigger
         self.purge_hooks()
         Globals.log.debug('Plugin Executing: ' + plugin.name)
@@ -93,7 +101,8 @@ class PluginLoader:
             if test:
                 if await fn(**kwargs) and (self.plugin_to_fname(plugin) not in self.hooks.keys()):
                     Globals.log.debug('Plugin execution satisfied clearing queue')
-                    self.plugin_queue.clear()
+                    #self.plugin_queue.clear() #deque
+                    self.plugin_queue = Queue()
                     return True
                 elif trigger in self.hooks.keys():
                     Globals.log.debug('Plugin Executing Trigger: ' + plugin.name)
