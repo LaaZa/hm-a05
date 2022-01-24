@@ -45,6 +45,8 @@ class SavedVar:
         if not self.loaded and f'{self._file}#{self._name}' not in self.pickledata.keys():
             self.update()
             self.save()
+        elif f'{self._file}#{self._name}' not in self.pickledata.keys():
+            self.update()
 
     @classmethod
     def _load(cls):

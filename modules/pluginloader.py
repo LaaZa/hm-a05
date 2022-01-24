@@ -11,7 +11,7 @@ from asyncio import Queue
 
 import nextcord
 
-from modules.globals import Globals
+from modules.globals import Globals, SavedVar
 from modules.pluginbase import PluginBase
 
 
@@ -20,7 +20,7 @@ class PluginLoader:
     plugins = OrderedDict()
     hooks = {}
     modules = {}
-    channel_disabled = defaultdict(list)
+    #channel_disabled = defaultdict(list)
     load_order = {'core': [], 'uncore': []}
     root = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.pardir), 'plugins/'))
     lofile = root + '/load.order'
@@ -33,6 +33,8 @@ class PluginLoader:
         self.load_plugins()
         self.write_load_order()
         self.order()
+        self.save_channel_disabled = SavedVar(defaultdict(list))
+        self.channel_disabled = self.save_channel_disabled.x
 
     def get_plugin(self, attribute, value, types) -> PluginBase:
         for fname, plugin in ((x, y) for x, y in self.plugins.items() if y.type in types):
@@ -93,7 +95,7 @@ class PluginLoader:
         self.purge_hooks()
         Globals.log.debug('Plugin Executing: ' + plugin.name)
         try:
-            if self.plugin_to_fname(plugin) in self.channel_disabled[channel]:
+            if self.plugin_to_fname(plugin) in self.channel_disabled[channel.id]:
                 return False
             test = True
             if callable(trigger):
@@ -235,9 +237,10 @@ class PluginLoader:
     def disable(self, fname, channel):
         for name, plugin in self.plugins.items():
             if fname == name:
-                if fname not in self.channel_disabled[channel]:
+                if fname not in self.channel_disabled[channel.id]:
                     if plugin.type is not PluginBase.PluginType.CORE:
-                        self.channel_disabled[channel].append(fname)
+                        self.channel_disabled[channel.id].append(fname)
+                        self.save_channel_disabled.x = self.channel_disabled
                         Globals.log.info('Plugin %s disabled on %s' % (fname, channel))
                         return 1  # success
                     else:
@@ -250,9 +253,10 @@ class PluginLoader:
     def enable(self, fname, channel):
         for name, plugin in self.plugins.items():
             if fname == name:
-                if fname in self.channel_disabled[channel]:
+                if fname in self.channel_disabled[channel.id]:
                     if plugin.type is not PluginBase.PluginType.CORE:
-                        self.channel_disabled[channel].remove(fname)
+                        self.channel_disabled[channel.id].remove(fname)
+                        self.save_channel_disabled.x = self.channel_disabled
                         Globals.log.info('Plugin %s enabled on %s' % (fname, channel))
                         return 1  # success
                 else:
