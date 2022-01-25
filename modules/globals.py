@@ -1,6 +1,7 @@
 import pickle
 import inspect
 from os import path, pardir
+from pathlib import Path
 from varname.helpers import register
 
 
@@ -84,3 +85,15 @@ class SavedVar:
 
     def __repr__(self):
         return str(self.x)
+
+
+class BotPath:
+
+    root = Path('.').parent.absolute()
+    modules = (root / 'modules').absolute()
+    plugins = (root / 'plugins').absolute()
+    static = (root / 'static').absolute()
+
+    @staticmethod
+    def get_file_path(pathdir: Path = root, file=''):
+        return (pathdir / file).absolute()

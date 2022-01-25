@@ -1,9 +1,8 @@
 import configparser
 import shutil
 import sys
-from os import path, pardir
 from codecs import open as copen
-from modules.globals import Globals
+from modules.globals import Globals, BotPath
 '''
 stolen from HM-A06
 '''
@@ -18,8 +17,8 @@ class Config(configparser.ConfigParser):
         super().__init__()
         Globals.config_data = self
 
-        self.defaultconf = path.abspath(path.join(path.join(path.dirname(__file__), pardir), '.defaultconf'))
-        self.conf_file = path.abspath(path.join(path.join(path.dirname(__file__), pardir), 'config.ini'))
+        self.defaultconf = BotPath.root / '.defaultconf'
+        self.conf_file = BotPath.root / 'config.ini'
         self.load()
 
     def load(self):

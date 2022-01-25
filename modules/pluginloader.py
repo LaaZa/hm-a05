@@ -11,7 +11,7 @@ from asyncio import Queue
 
 import nextcord
 
-from modules.globals import Globals, SavedVar
+from modules.globals import Globals, SavedVar, BotPath
 from modules.pluginbase import PluginBase
 
 
@@ -22,8 +22,8 @@ class PluginLoader:
     modules = {}
     #channel_disabled = defaultdict(list)
     load_order = {'core': [], 'uncore': []}
-    root = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.pardir), 'plugins/'))
-    lofile = root + '/load.order'
+    root = BotPath.plugins
+    lofile = BotPath.get_file_path(root, 'load.order')
     plugin_queue = Queue() #deque()
 
     def __init__(self):
@@ -115,7 +115,7 @@ class PluginLoader:
                 return False
         except Exception as err:
             Globals.log.error('Unhandled Exception from plugin: %s : %s' % (plugin.name, traceback.format_exc()))
-            await channel.send(file=nextcord.File(sys.path[0] + '/static/miharu_chibi_everything_small_crop_gradient.png'), content=f'gets hit by unhandled **{type(err).__name__}** thrown from {plugin.name} plugin')
+            await channel.send(file=nextcord.File(BotPath.static / 'miharu_chibi_everything_small_crop_gradient.png'), content=f'gets hit by unhandled **{type(err).__name__}** thrown from {plugin.name} plugin')
             return False
 
     def load_plugins(self, load='*'):
