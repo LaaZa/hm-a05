@@ -1,8 +1,10 @@
 import asyncio
 import re
+from dataclasses import dataclass, field
 from typing import Callable
 from enum import Enum
 from operator import itemgetter
+import functools
 
 import nextcord
 
@@ -15,10 +17,13 @@ class PluginBase:
         CORE = 0
         UNCORE = 1
 
+    @dataclass
     class Trigger:
 
-        def __init__(self):
-            self.functions = {}
+        functions: dict = field(default_factory=dict)
+
+        #def __init__(self):
+            #self.functions = {}
 
         def add_event(self, event: str, trigger, is_command: bool, function: Callable) -> None:
             triggers = self.functions.get(event, [])
@@ -231,3 +236,9 @@ class PluginBase:
                 if toggle[toggle[0]][3] not in (str(em) for em in self.message.reactions):
                     await self.message.add_reaction(emoji=toggle[toggle[0]][3])
 
+    def __init__(self):
+        self.t = self.Trigger()
+        self.trigger = self.t.functions
+
+    def add_trigger(self, event: str, trigger, is_command: bool, function: Callable) -> None:
+        self.t.add_event(event, trigger, is_command, function)

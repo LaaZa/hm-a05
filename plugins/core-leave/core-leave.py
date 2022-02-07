@@ -6,11 +6,10 @@ class Plugin(PluginBase):
     # plugin specific
 
     def __init__(self):
+        super().__init__()
         self.type = PluginBase.PluginType.CORE
         self.name = 'leave'
-        t = PluginBase.Trigger()
-        t.add_event('on_message', 'leave', True, self.on_message)
-        self.trigger = t.functions
+        self.add_trigger('on_message', 'leave', True, self.on_message)
         self.help = 'Leave from voice channels. g:Guild'
 
     async def on_message(self, message, trigger):

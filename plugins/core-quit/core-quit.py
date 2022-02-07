@@ -6,11 +6,10 @@ class Plugin(PluginBase):
     # plugin specific
 
     def __init__(self):
+        super().__init__()
         self.type = PluginBase.PluginType.CORE
         self.name = 'quit'
-        t = PluginBase.Trigger()
-        t.add_event('on_message', 'quit', True, self.on_message)
-        self.trigger = t.functions
+        self.add_trigger('on_message', 'quit', True, self.on_message)
         self.help = 'Quit and end application'
 
     async def on_message(self, message, trigger):

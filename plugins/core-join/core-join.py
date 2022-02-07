@@ -8,11 +8,10 @@ class Plugin(PluginBase):
     # plugin specific
 
     def __init__(self):
+        super().__init__()
         self.type = PluginBase.PluginType.CORE
         self.name = 'join'
-        t = PluginBase.Trigger()
-        t.add_event('on_message', 'join', True, self.on_message)
-        self.trigger = t.functions
+        self.add_trigger('on_message', 'join', True, self.on_message)
         self.help = 'Join voice channels. vc:VoiceChannelName g:Guild'
 
     async def on_message(self, message, trigger):

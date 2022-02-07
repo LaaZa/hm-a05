@@ -6,11 +6,10 @@ class Plugin(PluginBase):
     # plugin specific
 
     def __init__(self):
+        super().__init__()
         self.type = PluginBase.PluginType.CORE
         self.name = 'nickname change'
-        t = PluginBase.Trigger()
-        t.add_event('on_message', 'nick', True, self.on_message)
-        self.trigger = t.functions
+        self.add_trigger('on_message', 'nick', True, self.on_message)
         self.help = 'Change bot nickname'
 
     async def on_message(self, message, trigger):

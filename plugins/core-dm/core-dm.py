@@ -7,11 +7,10 @@ class Plugin(PluginBase):
     # plugin specific
 
     def __init__(self):
+        super().__init__()
         self.type = PluginBase.PluginType.CORE
         self.name = 'DM with bot'
-        t = PluginBase.Trigger()
-        t.add_event('on_message', 'dm', True, self.on_message)
-        self.trigger = t.functions
+        self.add_trigger('on_message', 'dm', True, self.on_message)
         self.help = 'Bot starts a DM'
 
     async def on_message(self, message, trigger):

@@ -6,12 +6,11 @@ class Plugin(PluginBase):
     # plugin specific
 
     def __init__(self):
+        super().__init__()
         self.type = PluginBase.PluginType.CORE
         self.name = 'Version info'
-        t = PluginBase.Trigger()
-        t.add_event('on_message', 'version', True, self.on_message)
-        t.add_event('on_message', 'about', True, self.on_message)
-        self.trigger = t.functions
+        self.add_trigger('on_message', 'version', True, self.on_message)
+        self.add_trigger('on_message', 'about', True, self.on_message)
         self.help = 'Show version information'
 
     async def on_message(self, message, trigger):
