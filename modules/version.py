@@ -29,23 +29,27 @@ def get_git_revision_short_hash(path_to_git='git'):
     return subprocess.check_output([path_to_git, 'rev-parse', '--short', 'HEAD'])
 
 
+def get_git_branch(path_to_git='git'):
+    return subprocess.check_output([path_to_git, 'rev-parse', '--abbrev-ref', 'HEAD'])
+
+
 def get_version(long_version=False):
     version_long = ''
     version_short = ''
     commit_count = ''
+    branch = ''
     try:
         version_short = get_git_revision_short_hash().decode("utf-8").strip()
         version_long = get_git_revision_hash().decode("utf-8").strip()
         commit_count = get_git_commit_count().decode("utf-8").strip()
+        branch = get_git_branch().decode("utf-8").strip()
     except WindowsError:
         version_short = get_git_revision_short_hash(win_git_path).decode("utf-8").strip()
         version_long = get_git_revision_hash(win_git_path).decode("utf-8").strip()
         commit_count = get_git_commit_count(win_git_path).decode("utf-8").strip()
+        branch = get_git_branch(win_git_path).decode("utf-8").strip()
     finally:
-        if long_version:
-            return '<' + major_version + ' r' + commit_count + '/' + 'git:' + version_long + '/' + platform.system() + '>'
-        else:
-            return '<' + major_version + ' r' + commit_count + '/' + 'git:' + version_short + '/' + platform.system() + '>'
+        return f'<{major_version} {branch}/r{commit_count}/git:{version_long if long_version else version_short}/{platform.system()}>'
 
 
 def get_author():
