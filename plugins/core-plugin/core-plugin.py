@@ -16,6 +16,8 @@ class Plugin(PluginBase):
             'commands': self.commands,
             'enable': self.enable,
             'disable': self.disable,
+            'slashenable': self.slash_enable,
+            'slashdisable': self.slash_disable,
             'load': self.load,
             'unload': self.unload,
             'reload': self.reload,
@@ -87,6 +89,8 @@ class Plugin(PluginBase):
             plugin = Globals.pluginloader.reload_plugin(msg.words(1))
             if plugin == 1:
                 await message.channel.send(f'reloaded plugin: {msg.words(1)}')
+                await Globals.disco.rollout_application_commands()
+                await message.guild.rollout_application_commands()
             elif plugin == -2:
                 await message.channel.send('Could not reload, plugin is throwing an error')
             else:
@@ -161,6 +165,42 @@ class Plugin(PluginBase):
                 await message.channel.send('Cannot disable a CORE type plugin')
             elif plugin == 2:
                 await message.channel.send('Plugin already disabled')
+            else:
+                await message.channel.send('No such plugin loaded')
+        else:
+            await message.channel.send('You must state the name of the plugin')
+
+    async def slash_enable(self, message, trigger):
+        msg = self.Command(message)
+        if not self.is_guild_admin(message.author, message.guild):
+            await message.channel.send('You need guild management rights for this command')
+            return
+        if msg.word(1):
+            plugin = Globals.pluginloader.add_slash_server(msg.words(1), message.guild)
+            if plugin == 1:
+                await message.channel.send(f'Enabled slash commands for plugin: {msg.words(1)}')
+                await Globals.disco.rollout_application_commands()
+                await message.guild.rollout_application_commands()
+            elif plugin == 2:
+                await message.channel.send('Slashes already enabled')
+            else:
+                await message.channel.send('No such plugin loaded')
+        else:
+            await message.channel.send('You must state the name of the plugin')
+
+    async def slash_disable(self, message, trigger):
+        msg = self.Command(message)
+        if not self.is_channel_admin(message.author, message.guild):
+            await message.channel.send('You need guild management rights for this command')
+            return
+        if msg.word(1):
+            plugin = Globals.pluginloader.add_slash_server(msg.words(1), message.guild)
+            if plugin == 1:
+                await message.channel.send(f'Disabled slash commands for plugin: {msg.words(1)}')
+                await Globals.disco.rollout_application_commands()
+                await message.guild.rollout_application_commands()
+            elif plugin == 2:
+                await message.channel.send('Slashes already disabled')
             else:
                 await message.channel.send('No such plugin loaded')
         else:

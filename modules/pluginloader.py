@@ -6,7 +6,7 @@ import os
 import re
 import sys
 import traceback
-from collections import OrderedDict, defaultdict, deque
+from collections import OrderedDict, defaultdict
 from asyncio import Queue
 
 import nextcord
@@ -20,21 +20,23 @@ class PluginLoader:
     plugins = OrderedDict()
     hooks = {}
     modules = {}
-    #channel_disabled = defaultdict(list)
     load_order = {'core': [], 'uncore': []}
     root = BotPath.plugins
     lofile = BotPath.get_file_path(root, 'load.order')
-    plugin_queue = Queue() #deque()
+    plugin_queue = Queue()
 
     def __init__(self):
         Globals.pluginloader = self
         # Load plugins
+        self.save_slash_servers = SavedVar(defaultdict(list))
+        self.slash_servers = self.save_slash_servers.x
+        self.save_channel_disabled = SavedVar(defaultdict(list))
+        self.channel_disabled = self.save_channel_disabled.x
         self.read_load_order()
         self.load_plugins()
         self.write_load_order()
         self.order()
-        self.save_channel_disabled = SavedVar(defaultdict(list))
-        self.channel_disabled = self.save_channel_disabled.x
+        Globals.log.debug(f'{self.slash_servers=}')
 
     def get_plugin(self, attribute, value, types) -> PluginBase:
         for fname, plugin in ((x, y) for x, y in self.plugins.items() if y.type in types):
@@ -49,7 +51,6 @@ class PluginLoader:
 
     async def generate_plugin_queue(self, event: str, is_command: bool = False, **kwargs):
         self.purge_hooks()
-        #self.plugin_queue.clear()
         self.plugin_queue = Queue()
         for plugin in self.plugins.values():
             fname = self.plugin_to_fname(plugin)
@@ -60,27 +61,21 @@ class PluginLoader:
                 if not is_command and not cmd and isinstance(trigger, type(re.compile(''))):  # use regex
                     match = re.search(trigger, kwargs['message'].content)
                     if match:
-                        #self.plugin_queue.append((plugin, event, match, fn))
                         await self.plugin_queue.put((plugin, event, match, fn))
                         if fname in self.hooks.keys():
                             for hooked in self.hooks.get(fname, ''):
-                                #self.plugin_queue.append((self.plugins.get(hooked), fname))
                                 await self.plugin_queue.put((self.plugins.get(hooked), fname))
                                 Globals.log.debug('Hook plugin added')
                 elif is_command and isinstance(trigger, str) and trigger.lower() == PluginBase.Command(kwargs['message']).cmd.lower():
-                    #self.plugin_queue.append((plugin, event, trigger, fn))
                     await self.plugin_queue.put((plugin, event, trigger, fn))
                     if fname in self.hooks.keys():
                         for hooked in self.hooks.get(fname, ''):
-                            #self.plugin_queue.append((self.plugins.get(hooked), fname))
                             await self.plugin_queue.put((self.plugins.get(hooked), fname))
                             Globals.log.debug('Hook plugin added')
                 elif not is_command and isinstance(trigger, collections.abc.Callable) and trigger(**kwargs):
-                    #self.plugin_queue.append((plugin, event, trigger, fn))
                     await self.plugin_queue.put((plugin, event, trigger, fn))
                     if fname in self.hooks.keys():
                         for hooked in self.hooks.get(fname, ''):
-                            #self.plugin_queue.append((self.plugins.get(hooked), fname))
                             await self.plugin_queue.put((self.plugins.get(hooked), fname))
                             Globals.log.debug('Hook plugin added')
         if self.plugin_queue.qsize() > 0:
@@ -103,7 +98,6 @@ class PluginLoader:
             if test:
                 if await fn(**kwargs) and (self.plugin_to_fname(plugin) not in self.hooks.keys()):
                     Globals.log.debug('Plugin execution satisfied clearing queue')
-                    #self.plugin_queue.clear() #deque
                     self.plugin_queue = Queue()
                     return True
                 elif trigger in self.hooks.keys():
@@ -114,7 +108,7 @@ class PluginLoader:
             else:
                 return False
         except Exception as err:
-            Globals.log.error('Unhandled Exception from plugin: %s : %s' % (plugin.name, traceback.format_exc()))
+            Globals.log.error(f'Unhandled Exception from plugin: {plugin.name} : {traceback.format_exc()}')
             await channel.send(file=nextcord.File(BotPath.static / 'miharu_chibi_everything_small_crop_gradient.png'), content=f'gets hit by unhandled **{type(err).__name__}** thrown from {plugin.name} plugin')
             return False
 
@@ -183,14 +177,11 @@ class PluginLoader:
     def reload_plugin(self, plugin):
         if plugin in self.plugins.keys() and plugin in self.modules.keys():
             try:
-                #mod = imp.reload(self.modules.get(plugin))
                 if self.unload_plugin(plugin, True) == 1:
                     if self.load_plugins(plugin) == 1:
                         return 1
                     else:
                         raise Exception
-                #self.modules.update({plugin: mod})
-                #self.plugins.update({plugin: mod.Plugin()})
             except Exception as err:
                 Globals.log.error('Plugin \'' + plugin + '\' reload failed: ' + str(err) + traceback.format_exc())
                 return -2
@@ -257,7 +248,7 @@ class PluginLoader:
                     if plugin.type is not PluginBase.PluginType.CORE:
                         self.channel_disabled[channel.id].remove(fname)
                         self.save_channel_disabled.x = self.channel_disabled
-                        Globals.log.info('Plugin %s enabled on %s' % (fname, channel))
+                        Globals.log.info(f'Plugin {fname} enabled on {channel}')
                         return 1  # success
                 else:
                     return 2  # already enabled
@@ -291,3 +282,32 @@ class PluginLoader:
             return list(self.plugins.keys())[list(self.plugins.values()).index(plugin)]
         except ValueError:
             return ''
+
+    def get_slash_servers(self, plugin):
+        try:
+            return self.save_slash_servers.x[plugin]
+        except Exception as err:
+            Globals.log.error(f'Fail {str(err)}')
+            return []
+
+    def add_slash_server(self, plugin, server: nextcord.Guild):
+        try:
+            if server.id in self.slash_servers.get(plugin, []):
+                return 2
+            self.slash_servers[plugin].append(server.id)
+            self.save_slash_servers.x = self.slash_servers
+            return 1
+        except Exception as err:
+            Globals.log.error(f'Fail: {plugin} {server.id} {str(err)}')
+            return
+
+    def del_slash_server(self, plugin, server: nextcord.Guild):
+        try:
+            if server.id not in self.slash_servers.get(plugin):
+                return 2
+            self.slash_servers[plugin].remove(server.id)
+            self.save_slash_servers.x = self.slash_servers
+            return 1
+        except Exception:
+            Globals.log.error(f'Fail: {plugin} {server.id}')
+            return
