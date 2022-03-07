@@ -1,7 +1,7 @@
 import asyncio
 import re
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Callable, Iterable
 from enum import Enum
 from operator import itemgetter
 import functools
@@ -12,6 +12,22 @@ from modules.globals import Globals
 
 
 class PluginBase:
+
+    def __init__(self):
+        self.t = self.Trigger()
+        self.trigger = self.t.functions
+
+    def add_trigger(self, event: str, trigger, is_command: bool, function: Callable) -> None:
+        self.t.add_event(event, trigger, is_command, function)
+
+    def add_application_command(self, callback, cmd_type: nextcord.ApplicationCommandType = nextcord.ApplicationCommandType.chat_input, name: str = None, description: str = None, guild_ids: Iterable[int] = Globals.pluginloader.get_slash_servers(__name__)):
+        arglist = ('callback', 'cmd_type', 'name', 'description', 'guild_ids')
+        arguments = {a: locals().get(a) for a in arglist if locals().get(a)}
+        app_cmd = nextcord.ApplicationCommand(**arguments)
+        Globals.disco.add_application_command(app_cmd, overwrite=True)
+
+
+    # other classes ###########################
 
     class PluginType(Enum):
         CORE = 0
@@ -236,9 +252,3 @@ class PluginBase:
                 if toggle[toggle[0]][3] not in (str(em) for em in self.message.reactions):
                     await self.message.add_reaction(emoji=toggle[toggle[0]][3])
 
-    def __init__(self):
-        self.t = self.Trigger()
-        self.trigger = self.t.functions
-
-    def add_trigger(self, event: str, trigger, is_command: bool, function: Callable) -> None:
-        self.t.add_event(event, trigger, is_command, function)
