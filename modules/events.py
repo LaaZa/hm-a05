@@ -36,6 +36,15 @@ class Events:
         @Globals.disco.event
         async def on_ready():
             Globals.log.info(f'Logged in: {Globals.disco.user.name} id: {Globals.disco.user.id}')
+            for plugin in Globals.pluginloader.plugins.values():
+                for cmd in plugin.app_cmds:
+                    try:
+                        Globals.disco.add_application_command(cmd, overwrite=True, use_rollout=True)
+                    except ValueError:
+                        pass
+            for guild in Globals.disco.guilds:
+                await guild.rollout_application_commands()
+            await Globals.disco.rollout_application_commands()
 
         @Globals.disco.event
         async def on_guild_join(guild):

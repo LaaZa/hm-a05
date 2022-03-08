@@ -28,7 +28,7 @@ class Plugin(PluginBase):
         try:
             await self.subcommands.get(msg.parts[1])(message, trigger)
             return True
-        except Exception as e:
+        except (IndexError, TypeError) as e:
             await message.channel.send(f"Available subcommands: {', '.join(self.subcommands.keys())}")
             Globals.log.error(f'No subcommand: {str(e)}')
             return False
@@ -89,8 +89,11 @@ class Plugin(PluginBase):
             plugin = Globals.pluginloader.reload_plugin(msg.words(1))
             if plugin == 1:
                 await message.channel.send(f'reloaded plugin: {msg.words(1)}')
-                await Globals.disco.rollout_application_commands()
-                await message.guild.rollout_application_commands()
+                try:
+                    await Globals.disco.rollout_application_commands()
+                    await message.guild.rollout_application_commands()
+                except ValueError:
+                    pass
             elif plugin == -2:
                 await message.channel.send('Could not reload, plugin is throwing an error')
             else:
@@ -183,6 +186,9 @@ class Plugin(PluginBase):
                 await message.guild.rollout_application_commands()
             elif plugin == 2:
                 await message.channel.send('Slashes already enabled')
+                await Globals.disco.rollout_application_commands()
+                await message.guild.rollout_application_commands()
+                Globals.log.debug(message.guild.get_application_commands())
             else:
                 await message.channel.send('No such plugin loaded')
         else:

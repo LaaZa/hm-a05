@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from typing import Callable, Iterable
 from enum import Enum
 from operator import itemgetter
-import functools
 
 import nextcord
 
@@ -16,15 +15,21 @@ class PluginBase:
     def __init__(self):
         self.t = self.Trigger()
         self.trigger = self.t.functions
+        self.app_cmds = set()
 
     def add_trigger(self, event: str, trigger, is_command: bool, function: Callable) -> None:
         self.t.add_event(event, trigger, is_command, function)
 
-    def add_application_command(self, callback, cmd_type: nextcord.ApplicationCommandType = nextcord.ApplicationCommandType.chat_input, name: str = None, description: str = None, guild_ids: Iterable[int] = Globals.pluginloader.get_slash_servers(__name__)):
+    def add_application_command(self, callback, cmd_type: nextcord.ApplicationCommandType = nextcord.ApplicationCommandType.chat_input, name: str = None, description: str = None, guild_ids: Iterable[int] = None):
         arglist = ('callback', 'cmd_type', 'name', 'description', 'guild_ids')
-        arguments = {a: locals().get(a) for a in arglist if locals().get(a)}
-        app_cmd = nextcord.ApplicationCommand(**arguments)
-        Globals.disco.add_application_command(app_cmd, overwrite=True)
+        locals_ = locals()
+        arguments = {a: locals_.get(a) for a in arglist if locals_.get(a)}
+        try:
+            app_cmd = nextcord.ApplicationCommand(**arguments)
+            self.app_cmds.add(app_cmd)
+            Globals.disco.add_application_command(app_cmd, overwrite=True, use_rollout=True)
+        except ValueError:
+            pass
 
 
     # other classes ###########################
