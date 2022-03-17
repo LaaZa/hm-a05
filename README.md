@@ -29,7 +29,7 @@ Run `python Miharu.py` again and if everything is correctly setup it should star
 
 To add yourself as a bot admin on discord, use .admin or .dm command on any channel the bot has joined and use .admin in the dm channel and copy and paste the unique admin token from the bot's log during bootup.
 * * *
-#### Powered By
+#### Development Powered By
 <a href="https://www.jetbrains.com/">
   <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo (Main) logo." width=100px>
 </a>
