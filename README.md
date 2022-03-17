@@ -6,7 +6,7 @@
 ### Multi function Discord bot
 
 In reference to Amakase Miharu
-<img src="https://www.python.org/static/community_logos/python-powered-h-140x182.png" hspace="120%"/>
+<img src="https://www.python.org/static/community_logos/python-powered-w.svg" width="300px" hspace="110%"/>
 [optional plugins repository](https://github.com/LaaZa/hm-a05-plugins)
 
 * * *
