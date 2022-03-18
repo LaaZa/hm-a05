@@ -33,7 +33,7 @@ class Plugin(PluginBase):
                         await nextcord.utils.get(message.guild.channels, id=message.author.voice.channel.id).connect()
                     else:
                         await nextcord.utils.get(message.guild.channels, name=keywords['vc']).connect()
-                if Globals.permissions.client_has_nextcord_permissions(('manage_messages',), message.channel):
+                if Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
                     Globals.log.error('Deleting message')
                     await message.delete()
                 return True
@@ -50,7 +50,7 @@ class Plugin(PluginBase):
                             await vc.move_to(nextcord.utils.get(guild.channels, name=keywords['vc']))
                         else:  # join channel if not joined on any
                             await nextcord.utils.get(guild.channels, name=keywords['vc']).connect()
-                if Globals.permissions.client_has_nextcord_permissions(('manage_messages',), message.channel):
+                if Globals.permissions.client_has_discord_permissions(('manage_messages',), message.channel):
                     Globals.log.error('Deleting message')
                     await message.delete()
                 return True
