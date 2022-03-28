@@ -9,6 +9,8 @@ class Disco(nextcord.Client):
 
     def __init__(self, token):
         self.__token = token
+
+        '''
         if not nextcord.opus.is_loaded():
             try:
                 nextcord.opus.load_opus('opus')
@@ -18,6 +20,7 @@ class Disco(nextcord.Client):
                 Globals.log.info('Opus codec loaded')
         else:
             Globals.log.info('Opus codec loaded')
+        '''
 
         nextcord.Intents.all()
         super().__init__()
