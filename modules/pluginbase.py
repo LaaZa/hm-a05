@@ -31,7 +31,6 @@ class PluginBase:
         except ValueError:
             pass
 
-
     # other classes ###########################
 
     class PluginType(Enum):
@@ -108,7 +107,7 @@ class PluginBase:
             except (IndexError, ValueError):
                 return default
 
-        def keyword_commands(self, keywords: tuple[str] = (), strip: bool = False) -> dict[str, str]:
+        def keyword_commands(self, keywords: tuple[str, ...] = (), strip: bool = False) -> dict[str, str]:
             indx = []
             keyword_values = {}
             for keyword in keywords:
