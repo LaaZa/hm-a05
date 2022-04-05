@@ -27,6 +27,13 @@ class Globals:
 
 @register
 class SavedVar:
+    """
+    Variable to be saved and loaded automatically.
+    Prefer to not use directly and instead set and load using normal variable at specific points.\n
+    SavedVar <<= is a shorthand for set.\n
+    +SavedVar returns the value.\n
+    alternatively use SavedVar.x directly.
+    """
 
     _picklefile = path.abspath(path.join(path.join(path.dirname(__file__), pardir), 'save.pickle'))
     pickledata = {}
