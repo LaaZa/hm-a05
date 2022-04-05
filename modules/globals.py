@@ -83,6 +83,12 @@ class SavedVar:
         self._data = val
         self.update()
 
+    def __ilshift__(self, other):
+        self.x = other
+
+    def __pos__(self):
+        return self.x
+
     def __repr__(self):
         return str(self.x)
 
