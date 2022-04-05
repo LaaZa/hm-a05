@@ -11,11 +11,15 @@ from modules.globals import Globals
 
 
 class PluginBase:
+    """
+    No help provided.
+    """
 
     def __init__(self):
         self.t = self.Trigger()
         self.trigger = self.t.functions
         self.app_cmds = set()
+        self.help = self.__doc__
 
     def add_trigger(self, event: str, trigger, is_command: bool, function: Callable) -> None:
         self.t.add_event(event, trigger, is_command, function)
