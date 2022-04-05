@@ -29,9 +29,9 @@ class PluginLoader:
         Globals.pluginloader = self
         # Load plugins
         self.save_slash_servers = SavedVar(defaultdict(list))
-        self.slash_servers = self.save_slash_servers.x
+        self.slash_servers = +self.save_slash_servers
         self.save_channel_disabled = SavedVar(defaultdict(list))
-        self.channel_disabled = self.save_channel_disabled.x
+        self.channel_disabled = +self.save_channel_disabled
         self.read_load_order()
         self.load_plugins()
         self.write_load_order()
@@ -231,7 +231,7 @@ class PluginLoader:
                 if fname not in self.channel_disabled[channel.id]:
                     if plugin.type is not PluginBase.PluginType.CORE:
                         self.channel_disabled[channel.id].append(fname)
-                        self.save_channel_disabled.x = self.channel_disabled
+                        self.save_channel_disabled <<= self.channel_disabled
                         Globals.log.info('Plugin %s disabled on %s' % (fname, channel))
                         return 1  # success
                     else:
@@ -247,7 +247,7 @@ class PluginLoader:
                 if fname in self.channel_disabled[channel.id]:
                     if plugin.type is not PluginBase.PluginType.CORE:
                         self.channel_disabled[channel.id].remove(fname)
-                        self.save_channel_disabled.x = self.channel_disabled
+                        self.save_channel_disabled <<= self.channel_disabled
                         Globals.log.info(f'Plugin {fname} enabled on {channel}')
                         return 1  # success
                 else:
@@ -285,7 +285,7 @@ class PluginLoader:
 
     def get_slash_servers(self, plugin):
         try:
-            return self.save_slash_servers.x[plugin]
+            return self.save_slash_servers[plugin]
         except Exception as err:
             Globals.log.error(f'Fail {str(err)}')
             return []
@@ -295,7 +295,7 @@ class PluginLoader:
             if server.id in self.slash_servers.get(plugin, []):
                 return 2
             self.slash_servers[plugin].append(server.id)
-            self.save_slash_servers.x = self.slash_servers
+            self.save_slash_servers <<= self.slash_servers
             return 1
         except Exception as err:
             Globals.log.error(f'Fail: {plugin} {server.id} {str(err)}')
@@ -306,7 +306,7 @@ class PluginLoader:
             if server.id not in self.slash_servers.get(plugin):
                 return 2
             self.slash_servers[plugin].remove(server.id)
-            self.save_slash_servers.x = self.slash_servers
+            self.save_slash_servers <<= self.slash_servers
             return 1
         except Exception:
             Globals.log.error(f'Fail: {plugin} {server.id}')

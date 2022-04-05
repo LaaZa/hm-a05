@@ -32,6 +32,7 @@ class SavedVar:
     Prefer to not use directly and instead set and load using normal variable at specific points.\n
     SavedVar <<= is a shorthand for set.\n
     +SavedVar returns the value.\n
+    SavedVar[] will work directly if the saved variable type supports it.(no +)
     alternatively use SavedVar.x directly.
     """
 
@@ -95,6 +96,12 @@ class SavedVar:
 
     def __pos__(self):
         return self.x
+
+    def __getitem__(self, key):
+        return self.x.__getitem__(key)
+
+    def __setitem__(self, key, value):
+        self.x.__setitem__(key, value)
 
     def __repr__(self):
         return str(self.x)
