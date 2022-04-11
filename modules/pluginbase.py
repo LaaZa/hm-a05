@@ -1,5 +1,7 @@
 import asyncio
 import re
+from datetime import datetime, timedelta
+import dateparser
 from dataclasses import dataclass, field
 from typing import Callable, Iterable
 from enum import Enum
@@ -156,6 +158,7 @@ class PluginBase:
     class Jobs:
 
         interval_tasks = {}
+        recurring_tasks = {}
 
         class IntervalTask:
 
@@ -194,6 +197,55 @@ class PluginBase:
             if caller.__module__ + task_id in cls.interval_tasks.keys():
                 cls.interval_tasks.get(caller.__module__ + task_id).stop()
                 cls.interval_tasks.pop(caller.__module__ + task_id)
+                return True
+            else:
+                return False
+
+        class RecurringTask:
+            def __init__(self, coroutine, date: datetime | str, frequency: timedelta, *args, **kwargs):
+                self.coro = coroutine
+                self.date: datetime = date if isinstance(date, datetime) else self._parse_date(date)
+                self.args = args
+                self.kwargs = kwargs
+                self.frequency: timedelta = frequency
+
+                self.task = Globals.disco.loop.create_task(self.run())
+                self.running = True
+
+            def _parse_date(self, date_str: str):
+                date = dateparser.parse(date_str, settings={'PREFER_DATES_FROM': 'future'})
+                if date:
+                    return date
+                raise ValueError
+
+            async def run(self) -> None:
+                while self.running:
+                    sleeptime = self.date - datetime.now()
+                    await asyncio.sleep(sleeptime.total_seconds())
+                    await self.coro(*self.args, **self.kwargs)
+                    self.date = self.date + self.frequency
+
+            def stop(self) -> None:
+                self.running = False
+                self.task.cancel()
+
+            def __del__(self):
+                self.stop()
+
+        @classmethod
+        def add_recurring_task(cls, caller, task_id: str, date: datetime | str, frequency: timedelta, coroutine, *args, **kwargs) -> bool:
+            if caller.__module__ + task_id in cls.recurring_tasks.keys():
+                return False
+            else:
+                task = cls.RecurringTask(coroutine, date, frequency, *args, **kwargs)
+                cls.recurring_tasks[caller.__module__ + task_id] = task
+                return True
+
+        @classmethod
+        def remove_recurring_task(cls, caller, task_id) -> bool:
+            if caller.__module__ + task_id in cls.recurring_tasks.keys():
+                cls.recurring_tasks.get(caller.__module__ + task_id).stop()
+                cls.recurring_tasks.pop(caller.__module__ + task_id)
                 return True
             else:
                 return False
