@@ -161,7 +161,9 @@ class PluginBase:
         recurring_tasks = {}
 
         class IntervalTask:
-
+            """
+            Interval task that will execute at specific intervals relative to the time of creation.
+            """
             def __init__(self, coroutine, interval: float, *args, **kwargs):
                 self.coro = coroutine
                 self.interval = interval
@@ -202,6 +204,11 @@ class PluginBase:
                 return False
 
         class RecurringTask:
+            """
+            A recurring task that will execute at specified time and then again after periods of frequency.
+            Negative frequency(timedelta) will cause execution and task to end after first one,
+            allowing for single delay.
+            """
             def __init__(self, coroutine, date: datetime | str, frequency: timedelta, *args, **kwargs):
                 self.coro = coroutine
                 self.date: datetime = date if isinstance(date, datetime) else self._parse_date(date)
@@ -223,6 +230,10 @@ class PluginBase:
                     sleeptime = self.date - datetime.now()
                     await asyncio.sleep(sleeptime.total_seconds())
                     await self.coro(*self.args, **self.kwargs)
+                    # If frequency is negative, we will stop after initial execution,
+                    # allowing for single fire delay
+                    if self.frequency != abs(self.frequency):
+                        self.stop()
                     self.date = self.date + self.frequency
 
             def stop(self) -> None:
