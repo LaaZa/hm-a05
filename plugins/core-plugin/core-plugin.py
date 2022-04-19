@@ -1,3 +1,5 @@
+import re
+
 from modules.globals import Globals
 from modules.pluginbase import PluginBase
 
@@ -10,6 +12,7 @@ class Plugin(PluginBase):
         self.type = PluginBase.PluginType.CORE
         self.name = 'plugin manager'
         self.add_trigger('on_message', 'plugin', True, self.on_message)
+        self.add_trigger('on_message', re.compile(r'^\?\s+(.*)'), False, self.help_msg)
         self.help = 'Manage plugins'
 
         self.subcommands = {
@@ -32,6 +35,19 @@ class Plugin(PluginBase):
             await message.channel.send(f"Available subcommands: {', '.join(self.subcommands.keys())}")
             Globals.log.error(f'No subcommand: {str(e)}')
             return False
+
+    # react for showing help for a plugin
+    async def help_msg(self, message, trigger):
+        if trigger.group(1):
+            for fname, plugin in Globals.pluginloader.plugins.items():
+                try:
+                    for evn in plugin.trigger.get('on_message'):
+                        if evn[1] and trigger.group(1).lower() == evn[0]:
+                            await message.channel.send(plugin.help)
+                            return True
+                except IndexError:
+                    pass
+        return False
 
     async def commands(self, message, trigger):
         commands = []

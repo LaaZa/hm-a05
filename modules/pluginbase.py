@@ -1,12 +1,12 @@
 import asyncio
 import re
-from datetime import datetime, timedelta
-import dateparser
 from dataclasses import dataclass, field
-from typing import Callable, Iterable
+from datetime import datetime, timedelta
 from enum import Enum
 from operator import itemgetter
+from typing import Callable, Iterable
 
+import dateparser
 import nextcord
 
 from modules.globals import Globals
@@ -47,9 +47,6 @@ class PluginBase:
     class Trigger:
 
         functions: dict = field(default_factory=dict)
-
-        #def __init__(self):
-            #self.functions = {}
 
         def add_event(self, event: str, trigger, is_command: bool, function: Callable) -> None:
             triggers = self.functions.get(event, [])
@@ -322,4 +319,3 @@ class PluginBase:
             for toggle in self.toggles:
                 if toggle[toggle[0]][3] not in (str(em) for em in self.message.reactions):
                     await self.message.add_reaction(emoji=toggle[toggle[0]][3])
-
