@@ -224,7 +224,7 @@ class PluginBase:
 
             async def run(self) -> None:
                 while self.running:
-                    sleeptime = self.date - datetime.now()
+                    sleeptime = self.date - datetime.now(tz=self.date.tzinfo)
                     await asyncio.sleep(sleeptime.total_seconds())
                     await self.coro(*self.args, **self.kwargs)
                     # If frequency is negative, we will stop after initial execution,
