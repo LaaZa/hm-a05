@@ -217,7 +217,7 @@ class PluginBase:
                 self.running = True
 
             def _parse_date(self, date_str: str):
-                date = dateparser.parse(date_str, settings={'PREFER_DATES_FROM': 'future'})
+                date = dateparser.parse(date_str)
                 if date:
                     return date
                 raise ValueError
@@ -225,7 +225,7 @@ class PluginBase:
             async def run(self) -> None:
                 while self.running:
                     sleeptime = self.date - datetime.now(tz=self.date.tzinfo)
-                    await asyncio.sleep(sleeptime.total_seconds())
+                    await asyncio.sleep(sleeptime.total_seconds() if sleeptime.total_seconds() >= 0 else 0)
                     await self.coro(*self.args, **self.kwargs)
                     # If frequency is negative, we will stop after initial execution,
                     # allowing for single fire delay
