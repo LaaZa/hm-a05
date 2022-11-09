@@ -22,8 +22,7 @@ class Disco(nextcord.Client):
             Globals.log.info('Opus codec loaded')
         '''
 
-        nextcord.Intents.all()
-        super().__init__()
+        super().__init__(intents=nextcord.Intents.all())
 
     def run(self, *args, **kwargs):
         super().run(self.__token)
