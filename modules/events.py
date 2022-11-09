@@ -43,8 +43,8 @@ class Events:
                     except ValueError:
                         pass
             for guild in Globals.disco.guilds:
-                await guild.rollout_application_commands()
-            await Globals.disco.rollout_application_commands()
+                await guild.sync_application_commands()
+            await Globals.disco.sync_application_commands()
 
         @Globals.disco.event
         async def on_guild_join(guild):
