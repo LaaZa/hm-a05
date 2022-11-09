@@ -30,7 +30,7 @@ class PluginBase:
         arglist = ('callback', 'cmd_type', 'name', 'description', 'guild_ids')
         locals_ = locals()
         arguments = {a: locals_.get(a) for a in arglist if locals_.get(a)}
-        app_cmd = nextcord.ApplicationCommand(**arguments)
+        app_cmd = nextcord.BaseApplicationCommand(**arguments)
         self.app_cmds.add(app_cmd)
         Globals.disco.add_application_command(app_cmd, overwrite=True, use_rollout=True)
     # other classes ###########################
