@@ -12,7 +12,7 @@ In reference to Amakase Miharu
 * * *
 #### Dependencies
 
-- Built for Python 3.10
+- Built for Python 3.11
 - [Nextcord](https://github.com/nextcord/nextcord)
 - [Varname](https://pypi.org/project/varname/)
 
