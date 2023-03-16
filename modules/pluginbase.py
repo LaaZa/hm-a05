@@ -26,11 +26,23 @@ class PluginBase:
     def add_trigger(self, event: str, trigger, is_command: bool, function: Callable) -> None:
         self.t.add_event(event, trigger, is_command, function)
 
-    def add_application_command(self, callback, cmd_type: nextcord.ApplicationCommandType = nextcord.ApplicationCommandType.chat_input, name: str = None, description: str = None, guild_ids: Iterable[int] = None):
-        arglist = ('callback', 'cmd_type', 'name', 'description', 'guild_ids')
+    def add_application_command(self, callback, cmd_type: nextcord.ApplicationCommandType = nextcord.ApplicationCommandType.chat_input, name: str = 'unnamed', description: str = None, guild_ids: Iterable[int] = None):
+        arglist = ('callback', 'name', 'description', 'cmd_type', 'guild_ids')
         locals_ = locals()
         arguments = {a: locals_.get(a) for a in arglist if locals_.get(a)}
-        app_cmd = nextcord.BaseApplicationCommand(**arguments)
+        Globals.log.debug(f'{arguments=}')
+        cmd = arguments.pop('cmd_type')
+        match cmd:
+            case nextcord.ApplicationCommandType.chat_input:
+                arguments.update({'name': arguments['name'].lower()})
+                app_cmd = nextcord.SlashApplicationCommand(**arguments)
+            case nextcord.ApplicationCommandType.user:
+                app_cmd = nextcord.UserApplicationCommand(**arguments)
+            case nextcord.ApplicationCommandType.message:
+                app_cmd = nextcord.MessageApplicationCommand(**arguments)
+            case _:
+                return
+
         self.app_cmds.add(app_cmd)
         Globals.disco.add_application_command(app_cmd, overwrite=True, use_rollout=True)
     # other classes ###########################
