@@ -1,3 +1,5 @@
+import nextcord.errors
+
 from modules.globals import Globals
 
 
@@ -43,9 +45,14 @@ class Events:
                     except ValueError:
                         pass
             for guild in Globals.disco.guilds:
-                await guild.sync_application_commands()
-            await Globals.disco.sync_application_commands()
-
+                try:
+                    await guild.sync_application_commands()
+                except nextcord.errors.HTTPException as e:
+                    Globals.log.error(f'Error syncing app commands to a guild: {guild.name}, Err: {e.args}')
+            try:
+                await Globals.disco.sync_all_application_commands()
+            except nextcord.errors.HTTPException as e:
+                Globals.log.error(f'Error syncing all app commands: Err: {e.args}')
         @Globals.disco.event
         async def on_guild_join(guild):
             Globals.log.info(f'Joined guild: {guild.name}')
