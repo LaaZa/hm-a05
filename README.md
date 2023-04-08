@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://user-images.githubusercontent.com/6142286/158825744-a90ca074-6cc2-43e9-a662-695db28cadb1.gif"/>
+  <img src="https://github.com/LaaZa/hm-a05/blob/nextcord/static/small/excited.png"/>
 </div>
 
 # HM-A05 'Miharu'
