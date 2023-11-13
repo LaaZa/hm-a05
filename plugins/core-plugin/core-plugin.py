@@ -106,8 +106,8 @@ class Plugin(PluginBase):
             if plugin == 1:
                 await message.channel.send(f'reloaded plugin: {msg.words(1)}')
                 try:
-                    await Globals.disco.rollout_application_commands()
-                    await message.guild.rollout_application_commands()
+                    await Globals.disco.sync_all_application_commands()
+                    
                 except ValueError:
                     pass
             elif plugin == -2:
@@ -198,12 +198,12 @@ class Plugin(PluginBase):
             plugin = Globals.pluginloader.add_slash_server(msg.words(1), message.guild)
             if plugin == 1:
                 await message.channel.send(f'Enabled slash commands for plugin: {msg.words(1)}')
-                await Globals.disco.rollout_application_commands()
-                await message.guild.rollout_application_commands()
+                await Globals.disco.sync_all_application_commands()
+                
             elif plugin == 2:
                 await message.channel.send('Slashes already enabled')
-                await Globals.disco.rollout_application_commands()
-                await message.guild.rollout_application_commands()
+                await Globals.disco.sync_all_application_commands()
+                
                 Globals.log.debug(message.guild.get_application_commands())
             else:
                 await message.channel.send('No such plugin loaded')
@@ -219,8 +219,8 @@ class Plugin(PluginBase):
             plugin = Globals.pluginloader.add_slash_server(msg.words(1), message.guild)
             if plugin == 1:
                 await message.channel.send(f'Disabled slash commands for plugin: {msg.words(1)}')
-                await Globals.disco.rollout_application_commands()
-                await message.guild.rollout_application_commands()
+                await Globals.disco.sync_all_application_commands()
+                
             elif plugin == 2:
                 await message.channel.send('Slashes already disabled')
             else:
