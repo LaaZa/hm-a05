@@ -110,6 +110,7 @@ class PluginLoader:
         except Exception as err:
             Globals.log.error(f'Unhandled Exception from plugin: {plugin.name} : {traceback.format_exc()}')
             await channel.send(file=nextcord.File(BotPath.static / 'miharu_chibi_everything_small_crop_gradient.png'), content=f'gets hit by unhandled **{type(err).__name__}** thrown from {plugin.name} plugin')
+            self.plugin_queue = Queue()
             return False
 
     def load_plugins(self, load='*'):
