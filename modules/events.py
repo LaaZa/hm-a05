@@ -16,13 +16,15 @@ class Events:
 
             if message.author.id != Globals.disco.user.id and not message.author.bot:
                 await Globals.pluginloader.generate_plugin_queue('on_message', is_command=True, message=message)
-                status = True
+                status = Globals.pluginloader.plugin_queue.qsize() > 0
                 while status:
                     result = await Globals.pluginloader.execute_plugin_queue(channel=message.channel, message=message)
                     if result is True:
                         return True
                     if result == -1:
-                        status = False
+                        break
+                if status:
+                    return True
 
             # Reactions
             if message.author.id != Globals.disco.user.id and not message.author.bot:
